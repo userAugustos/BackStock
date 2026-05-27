@@ -18,7 +18,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p ./tsconfig.app.json --noEmit",
-    "test:e2e": "bunx playwright test"
+    "test:e2e": "E2E=true bunx playwright test"
   },
   "dependencies": {
     "@elysiajs/eden": "1.4.6",

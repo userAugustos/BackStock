@@ -3,8 +3,10 @@ import { resolve } from 'path';
 
 import { config as loadEnv } from 'dotenv';
 
+const testEnv = resolve(import.meta.dirname, '.env.test');
 const localEnv = resolve(import.meta.dirname, '.env.local');
 const baseEnv = resolve(import.meta.dirname, '.env');
+if (process.env.E2E === 'true' && existsSync(testEnv)) loadEnv({ path: testEnv });
 if (existsSync(localEnv)) loadEnv({ path: localEnv });
 if (existsSync(baseEnv)) loadEnv({ path: baseEnv });
 
