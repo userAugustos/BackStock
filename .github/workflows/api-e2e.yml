@@ -15,8 +15,19 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
 
-    # SQLite (bun:sqlite) needs no service containers. Add them here if a DB opt-in is introduced.
-    services: {}
+    # SQLite (bun:sqlite) needs no DB container. RabbitMQ is required for queue-backed tests.
+    services:
+      rabbitmq:
+        image: rabbitmq:4.2.2-management-alpine
+        ports: ['5672:5672', '15672:15672']
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4

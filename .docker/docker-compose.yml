@@ -1,3 +1,21 @@
-services: {}
+services:
+  rabbitmq:
+    image: rabbitmq:4.2.2-management-alpine
+    restart: unless-stopped
+    ports:
+      - '${RABBITMQ_HOST_PORT:-5672}:5672'
+      - '${RABBITMQ_UI_PORT:-15672}:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD-SHELL', 'rabbitmq-diagnostics -q ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-volumes: {}
+volumes:
+  rabbitmq-data:
+    name: ${RABBITMQ_VOLUME:-store-pilot-rabbitmq-data}
