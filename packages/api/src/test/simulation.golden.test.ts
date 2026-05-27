@@ -57,23 +57,23 @@ const heroEvents: SimEvent[] = [
 ];
 
 describe('simulation determinism', () => {
-  test('same inputs produce identical output on every run', () => {
+  test('same inputs produce identical output on every run', async () => {
     const initial = buildInitialState(heroSeedState);
-    const result1 = simulate(initial, heroEvents, stubDecisionResolver);
-    const result2 = simulate(initial, heroEvents, stubDecisionResolver);
+    const result1 = await simulate(initial, heroEvents, stubDecisionResolver);
+    const result2 = await simulate(initial, heroEvents, stubDecisionResolver);
 
     expect(JSON.stringify(result1)).toBe(JSON.stringify(result2));
   });
 
-  test('hero day produces expected number of steps', () => {
+  test('hero day produces expected number of steps', async () => {
     const initial = buildInitialState(heroSeedState);
-    const result = simulate(initial, heroEvents, stubDecisionResolver);
+    const result = await simulate(initial, heroEvents, stubDecisionResolver);
     expect(result.steps).toHaveLength(heroEvents.length + 1);
   });
 
-  test('hero day impact has valid structure', () => {
+  test('hero day impact has valid structure', async () => {
     const initial = buildInitialState(heroSeedState);
-    const result = simulate(initial, heroEvents, stubDecisionResolver);
+    const result = await simulate(initial, heroEvents, stubDecisionResolver);
     const impact = result.impact;
     expect(typeof impact.waste_pct).toBe('number');
     expect(typeof impact.waste_value).toBe('number');
@@ -87,18 +87,18 @@ describe('simulation determinism', () => {
     expect(impact.missed_revenue).toBeGreaterThanOrEqual(0);
   });
 
-  test('sales_spike reduces on_hand', () => {
+  test('sales_spike reduces on_hand', async () => {
     const initial = buildInitialState(heroSeedState);
-    const result = simulate(initial, heroEvents, stubDecisionResolver);
+    const result = await simulate(initial, heroEvents, stubDecisionResolver);
     const step1 = result.steps[1]!;
     const milkAfterSpike = step1.state_snapshot.skus['milk-2pct-gal']!;
     expect(milkAfterSpike.on_hand).toBeLessThan(30);
     expect(milkAfterSpike.units_sold).toBeGreaterThan(0);
   });
 
-  test('damage_report reduces on_hand and increases waste', () => {
+  test('damage_report reduces on_hand and increases waste', async () => {
     const initial = buildInitialState(heroSeedState);
-    const result = simulate(initial, heroEvents, stubDecisionResolver);
+    const result = await simulate(initial, heroEvents, stubDecisionResolver);
     const stepBeforeDamage = result.steps[2]!;
     const stepAfterDamage = result.steps[3]!;
     const lettuceBefore = stepBeforeDamage.state_snapshot.skus['produce-lettuce']!;
@@ -107,32 +107,32 @@ describe('simulation determinism', () => {
     expect(lettuceAfter.units_wasted).toBe(lettuceBefore.units_wasted + 8);
   });
 
-  test('invoice_cost_change updates unit_cost', () => {
+  test('invoice_cost_change updates unit_cost', async () => {
     const initial = buildInitialState(heroSeedState);
-    const result = simulate(initial, heroEvents, stubDecisionResolver);
+    const result = await simulate(initial, heroEvents, stubDecisionResolver);
     const stepAfterCost = result.steps[4]!;
     expect(stepAfterCost.state_snapshot.skus['milk-2pct-gal']!.unit_cost).toBe(3.1);
   });
 
-  test('vendor_delay increases vendor delay_hours', () => {
+  test('vendor_delay increases vendor delay_hours', async () => {
     const initial = buildInitialState(heroSeedState);
-    const result = simulate(initial, heroEvents, stubDecisionResolver);
+    const result = await simulate(initial, heroEvents, stubDecisionResolver);
     const stepAfterDelay = result.steps[2]!;
     expect(stepAfterDelay.state_snapshot.vendors['dairy-co']!.delay_hours).toBe(6);
   });
 
-  test('decisions are recorded for decision points', () => {
+  test('decisions are recorded for decision points', async () => {
     const initial = buildInitialState(heroSeedState);
-    const result = simulate(initial, heroEvents, stubDecisionResolver);
+    const result = await simulate(initial, heroEvents, stubDecisionResolver);
     const inventoryDecisions = result.decisions.filter((d) => d.decision.agent === 'inventory');
     const pricingDecisions = result.decisions.filter((d) => d.decision.agent === 'pricing');
     expect(inventoryDecisions.length).toBeGreaterThanOrEqual(1);
     expect(pricingDecisions.length).toBeGreaterThanOrEqual(1);
   });
 
-  test('manager_override approve transitions order to placed', () => {
+  test('manager_override approve transitions order to placed', async () => {
     const initial = buildInitialState(heroSeedState);
-    const result = simulate(initial, heroEvents, stubDecisionResolver);
+    const result = await simulate(initial, heroEvents, stubDecisionResolver);
     const finalStep = result.steps[result.steps.length - 1]!;
     const advancedOrders = finalStep.order_state.filter(
       (o) => o.status === 'placed' || o.status === 'in_transit' || o.status === 'delivered'

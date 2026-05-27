@@ -119,7 +119,7 @@ export type DecisionResolver = (
   agent: DecisionAgent,
   context: SimState,
   event: SimEvent
-) => Decision;
+) => Decision | Promise<Decision>;
 
 export interface DecisionRecord {
   event_seq: number;
