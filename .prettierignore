@@ -4,3 +4,4 @@
 **/*.gen.ts
 bun.lock
 data
+**/skills/**
