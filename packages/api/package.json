@@ -22,6 +22,10 @@
     "./versions": {
       "types": "./dist/versions.d.ts",
       "import": "./dist/versions.js"
+    },
+    "./runs": {
+      "types": "./dist/runs.d.ts",
+      "import": "./dist/runs.js"
     }
   },
   "scripts": {
