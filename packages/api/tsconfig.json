@@ -1,0 +1,13 @@
+{
+  "extends": "@store-pilot/tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "paths": {
+      "@api/*": ["./src/*"],
+      "@core/*": ["./src/modules/core/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

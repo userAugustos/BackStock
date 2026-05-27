@@ -1,0 +1,56 @@
+{
+  "name": "@store-pilot/api",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js"
+    }
+  },
+  "scripts": {
+    "build": "bun run build:sdk",
+    "build:sdk": "tsup",
+    "dev": "concurrently -n server,sdk -c blue,cyan \"bun run dev:server\" \"bun run dev:sdk\"",
+    "dev:server": "bun run --watch src/server.ts",
+    "dev:sdk": "tsup --watch",
+    "start": "bun run src/server.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "bun run src/db/migrate.ts",
+    "db:studio": "drizzle-kit studio",
+    "test": "bun test --env-file .env --preload ./src/test/setup.ts",
+    "test:e2e": "bun test --bail --env-file .env --env-file .env.test --preload ./src/test/setup.ts src/test/e2e.*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@elysiajs/eden": "^1.4.6",
+    "zod": ">=3.25.3"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "1.4.1",
+    "@elysiajs/openapi": "1.4.14",
+    "drizzle-orm": "^0.36.0",
+    "elysia": "1.4.22",
+    "pino": "^10.1.1",
+    "zod-to-json-schema": "^3.24.1"
+  },
+  "devDependencies": {
+    "@elysiajs/eden": "^1.4.6",
+    "@store-pilot/tsconfig": "workspace:*",
+    "bun-types": "^1.3.2",
+    "concurrently": "^9.1.2",
+    "drizzle-kit": "^0.28.0",
+    "pino-pretty": "^13.1.3",
+    "tsup": "^8.5.1",
+    "typescript": "5.9.3",
+    "zod": "^3.25.3"
+  }
+}
