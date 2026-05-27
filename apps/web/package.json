@@ -1,0 +1,53 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "bun": ">=1.3.1"
+  },
+  "browserslist": [
+    "chrome >= 111",
+    "safari >= 16.4",
+    "firefox >= 128",
+    "edge >= 111",
+    "ios_saf >= 16.4"
+  ],
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p ./tsconfig.app.json --noEmit",
+    "test:e2e": "bunx playwright test"
+  },
+  "dependencies": {
+    "@elysiajs/eden": "1.4.6",
+    "@repo/ui": "*",
+    "@store-pilot/api": "*",
+    "@tanstack/react-query": "^5.81.2",
+    "@tanstack/react-query-devtools": "^5.81.2",
+    "@tanstack/react-router": "^1.121.34",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.11",
+    "tailwind-merge": "^3.0.1",
+    "tw-animate-css": "^1.2.4",
+    "vite-tsconfig-paths": "^5.1.4",
+    "zod": "^3.25.71",
+    "zustand": "^5.0.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@store-pilot/tsconfig": "workspace:*",
+    "@tailwindcss/vite": "^4.1.10",
+    "@tanstack/router-plugin": "^1.121.37",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react-swc": "^3.10.2",
+    "playwright": "^1.57.0",
+    "terser": "^5.46.0",
+    "typescript": "5.9.3",
+    "vite": "^7.3.0"
+  }
+}
