@@ -19,10 +19,12 @@
   "scripts": {
     "build": "bun run build:sdk",
     "build:sdk": "tsup",
-    "dev": "concurrently -n server,sdk -c blue,cyan \"bun run dev:server\" \"bun run dev:sdk\"",
+    "dev": "concurrently -n server,workers,sdk -c blue,green,cyan \"bun run dev:server\" \"bun run dev:workers\" \"bun run dev:sdk\"",
     "dev:server": "bun run --watch src/server.ts",
+    "dev:workers": "bun run --watch src/workers.ts",
     "dev:sdk": "tsup --watch",
     "start": "bun run src/server.ts",
+    "start:workers": "bun run ./src/workers.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
@@ -40,6 +42,7 @@
     "drizzle-orm": "^0.36.0",
     "elysia": "1.4.22",
     "pino": "^10.1.1",
+    "rabbitmq-client": "^5.0.8",
     "zod-to-json-schema": "^3.24.1"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 import { helpers } from './env.helpers';
 
 const env = Bun.env;
-const { parseInteger } = helpers;
+const { parseInteger, requireEnv } = helpers;
 const environment = env.NODE_ENV ?? 'development';
 
 export const config = {
@@ -19,6 +19,12 @@ export const config = {
   },
   database: {
     url: env.DATABASE_URL ?? './data/store-pilot.db',
+  },
+  rabbitmq: {
+    url: requireEnv('RABBITMQ_URL'),
+    prefix: env.RABBITMQ_PREFIX ?? '',
+    managementUrl: env.RABBITMQ_MANAGEMENT_URL ?? '',
+    managementPort: parseInteger(env.RABBITMQ_MANAGEMENT_PORT, 15672),
   },
 };
 
