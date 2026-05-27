@@ -1,0 +1,48 @@
+{
+  "name": "store-pilot",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "bun": ">=1.3.1"
+  },
+  "packageManager": "bun@1.3.8",
+  "scripts": {
+    "postinstall": "turbo run build:sdk --output-logs=new-only",
+    "fmt": "bun run ./scripts/commands/format.ts",
+    "check": "bun run ./scripts/commands/check.ts",
+    "lint": "bun run ./scripts/commands/lint.ts",
+    "typecheck": "bun run ./scripts/commands/typecheck.ts",
+    "format": "prettier --log-level=error --cache --write .",
+    "format:check": "prettier --cache --check .",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "build:sdk": "turbo run build:sdk",
+    "api:test:e2e": "bun run --filter @store-pilot/api test:e2e",
+    "ui:test:e2e": "bun run --filter web test:e2e",
+    "docker:up": "docker compose --env-file .docker/.env -f .docker/docker-compose.yml up -d --wait",
+    "docker:up:no-seed": "docker compose --env-file .docker/.env -f .docker/docker-compose.yml up -d --wait",
+    "docker:down": "docker compose --env-file .docker/.env -f .docker/docker-compose.yml down",
+    "docker:rm": "docker compose --env-file .docker/.env -f .docker/docker-compose.yml down --volumes",
+    "docker:rm-all": "docker ps -aq --filter name=store-pilot- | xargs -r docker rm -f && docker volume ls -q --filter name=store-pilot- | xargs -r docker volume rm",
+    "docker:logs": "docker compose --env-file .docker/.env -f .docker/docker-compose.yml logs -f",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
+    "@types/bun": "^1.3.1",
+    "@types/node": "^22.10.5",
+    "bun-types": "^1.3.2",
+    "dotenv": "^17.2.3",
+    "husky": "^9.1.7",
+    "oxlint": "1.25.0",
+    "oxlint-tsgolint": "0.4.0",
+    "prettier": "3.6.2",
+    "prettier-plugin-tailwindcss": "^0.7.1",
+    "turbo": "^2.7.3",
+    "typescript": "5.9.3"
+  }
+}
