@@ -14,6 +14,14 @@
     "./core": {
       "types": "./dist/core.d.ts",
       "import": "./dist/core.js"
+    },
+    "./days": {
+      "types": "./dist/days.d.ts",
+      "import": "./dist/days.js"
+    },
+    "./versions": {
+      "types": "./dist/versions.d.ts",
+      "import": "./dist/versions.js"
     }
   },
   "scripts": {
