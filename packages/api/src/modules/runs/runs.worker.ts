@@ -1,9 +1,12 @@
+import { createLlmClient } from '@api/modules/agents/agents.llm-client';
+import { createLlmDecisionResolver } from '@api/modules/agents/agents.resolver';
 import { findDayById, findEventsByDayId } from '@api/modules/days/days.repository';
 import { buildInitialState, simulate } from '@api/modules/simulation/simulation.engine';
 import { stubDecisionResolver } from '@api/modules/simulation/simulation.stubs';
 import { findVersionById } from '@api/modules/versions/versions.repository';
 import type { SeedState } from '@api/modules/days/days.schemas';
-import type { SimEvent } from '@api/modules/simulation/simulation.types';
+import type { DecisionResolver, SimEvent } from '@api/modules/simulation/simulation.types';
+import { config } from '@core/env';
 import { wrapError } from '@core/errors';
 import { LOG_DOMAINS, logger } from '@core/logger';
 import { record } from '@core/telemetry';
@@ -12,6 +15,46 @@ import { completeRunOnce, findRunById, updateRunStatus } from './runs.repository
 
 const workerLogger = logger.child({ domain: LOG_DOMAINS.SIM });
 const RUN_WORKER_SUBSCRIBER_ID = 'runs.worker';
+
+// Model ids that bypass the LLM and use the deterministic stub resolver (tests / no-Modal dev).
+const STUB_MODEL_IDS = new Set(['stub', 'stub-model']);
+
+function isStubModel(modelId: string): boolean {
+  return STUB_MODEL_IDS.has(modelId);
+}
+
+/**
+ * Selects a run's decision resolver from its version's model id: stub ids use the
+ * deterministic stub resolver; any other id wires a real Modal LLM client + resolver.
+ */
+function buildResolver(
+  modelId: string,
+  catalogSkuIds: string[],
+  inventoryPromptVersion: string,
+  pricingPromptVersion: string
+): DecisionResolver {
+  if (isStubModel(modelId)) {
+    return stubDecisionResolver;
+  }
+
+  const client = createLlmClient({
+    url: config.llm.url,
+    token: config.llm.token,
+    proxyKey: config.llm.proxyKey,
+    proxySecret: config.llm.proxySecret,
+    timeoutMs: config.llm.timeoutMs,
+  });
+
+  const resolver = createLlmDecisionResolver({
+    client,
+    catalogSkuIds,
+    modelId,
+    inventoryPromptVersion,
+    pricingPromptVersion,
+  });
+
+  return resolver;
+}
 
 /**
  * Executes a queued run. Redelivered queue messages are idempotent because only
@@ -49,8 +92,16 @@ export async function executeRun(runId: string): Promise<void> {
         payload: JSON.parse(e.payload),
       }));
 
+      const catalogSkuIds = seedState.skus.map((s) => s.id);
+      const resolver = buildResolver(
+        version.modelId,
+        catalogSkuIds,
+        version.inventoryPromptVersion,
+        version.pricingPromptVersion
+      );
+
       const initialState = buildInitialState(seedState);
-      const result = simulate(initialState, events, stubDecisionResolver);
+      const result = await simulate(initialState, events, resolver);
 
       const completed = completeRunOnce({
         runId,
@@ -72,12 +123,12 @@ export async function executeRun(runId: string): Promise<void> {
               ? version.pricingPromptVersion
               : version.inventoryPromptVersion,
           modelId: version.modelId,
-          rawOutput: JSON.stringify(d.decision),
+          rawOutput: d.raw_output,
           parsed: d.decision,
           reasoning: d.decision.summary,
-          source: 'stub',
-          valid: true,
-          latencyMs: 0,
+          source: d.source,
+          valid: d.valid,
+          latencyMs: d.latency_ms,
         })),
         impact: result.impact,
         completedAt: new Date().toISOString(),
