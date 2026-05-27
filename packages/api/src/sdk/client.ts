@@ -1,1 +1,1 @@
-export type { StorePilotApi } from '../app';
+export type { BackStockApi } from '../app';

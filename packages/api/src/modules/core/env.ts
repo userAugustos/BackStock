@@ -18,7 +18,7 @@ export const config = {
     publicUrl: env.WEB_PUBLIC_URL ?? 'http://localhost:5173',
   },
   database: {
-    url: env.DATABASE_URL ?? './data/store-pilot.db',
+    url: env.DATABASE_URL ?? './data/back-stock.db',
   },
   rabbitmq: {
     url: requireEnv('RABBITMQ_URL'),

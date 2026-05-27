@@ -1,5 +1,5 @@
 /**
- * SDK Entry Point. For the API type used with Eden Treaty, import from @store-pilot/api/client.
+ * SDK Entry Point. For the API type used with Eden Treaty, import from @back-stock/api/client.
  * This file is a placeholder so the package has a default export surface.
  */
-export type StorePilotApiType = unknown;
+export type BackStockApiType = unknown;

@@ -18,4 +18,4 @@ services:
 
 volumes:
   rabbitmq-data:
-    name: ${RABBITMQ_VOLUME:-store-pilot-rabbitmq-data}
+    name: ${RABBITMQ_VOLUME:-back-stock-rabbitmq-data}

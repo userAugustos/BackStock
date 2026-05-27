@@ -22,7 +22,7 @@ const getClientIp = (request: Request): string =>
   'unknown';
 
 export const createApp = () =>
-  new Elysia({ name: 'store-pilot-api' })
+  new Elysia({ name: 'back-stock-api' })
     .use(errorPlugin)
     .use(securityHeaders())
     .onRequest(({ request, set }) => {
@@ -55,7 +55,7 @@ export const createApp = () =>
             path: '/docs',
             mapJsonSchema: { zod: zodToJsonSchema },
             documentation: {
-              info: { title: 'store-pilot API', version: '0.1.0' },
+              info: { title: 'back-stock API', version: '0.1.0' },
               tags: [],
             },
           })
@@ -70,10 +70,10 @@ export const createApp = () =>
       { detail: { summary: 'Health Check', tags: ['system'] } }
     );
 
-export const storePilotApi = createApp();
+export const backStockApi = createApp();
 // Feature modules attach here as: .use(<feature>Routes)
 
-export type StorePilotApi = typeof storePilotApi;
+export type BackStockApi = typeof backStockApi;
 
 export const setupApi = async () => {
   migrate(db, { migrationsFolder: './src/db/migrations' });
@@ -83,7 +83,7 @@ export const setupApi = async () => {
 export const startApi = async ({ host, port }: { host: string; port: number }) => {
   httpLogger.info('Starting API', { env: config.environment });
   await setupApi();
-  return storePilotApi.listen({ hostname: host, port }, ({ port }) => {
+  return backStockApi.listen({ hostname: host, port }, ({ port }) => {
     httpLogger.info('API listening', { host, port, env: config.environment });
   });
 };

@@ -10,7 +10,7 @@ export interface TraceContext {
   service_name: string;
 }
 
-const serviceName = Bun.env.SERVICE_NAME ?? 'store-pilot-api';
+const serviceName = Bun.env.SERVICE_NAME ?? 'back-stock-api';
 const traceStorage = new AsyncLocalStorage<TraceContext>();
 
 const toErrorMessage = (error: unknown): string =>

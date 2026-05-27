@@ -8,7 +8,7 @@ export const webEnv = {
     baseUrl: required('API_URL', import.meta.env.VITE_API_URL),
   },
   app: {
-    name: 'StorePilot',
+    name: 'BackStock',
     isProduction: import.meta.env.PROD,
     isDevelopment: import.meta.env.DEV,
   },

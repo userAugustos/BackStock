@@ -23,7 +23,7 @@
   "dependencies": {
     "@elysiajs/eden": "1.4.6",
     "@repo/ui": "*",
-    "@store-pilot/api": "*",
+    "@back-stock/api": "*",
     "@tanstack/react-query": "^5.81.2",
     "@tanstack/react-query-devtools": "^5.81.2",
     "@tanstack/react-router": "^1.121.34",
@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@store-pilot/tsconfig": "workspace:*",
+    "@back-stock/tsconfig": "workspace:*",
     "@tailwindcss/vite": "^4.1.10",
     "@tanstack/router-plugin": "^1.121.37",
     "@types/node": "^24.10.0",

@@ -5,7 +5,7 @@ import { api, setupE2ETests } from './e2e.setup';
 setupE2ETests();
 
 describe('SDK contract', () => {
-  test('healthz round-trip via edenTreaty<StorePilotApi> preserves shape', async () => {
+  test('healthz round-trip via edenTreaty<BackStockApi> preserves shape', async () => {
     const { data, error } = await api.healthz.get();
     expect(error).toBeNull();
     if (!data) throw new Error('healthz returned no data');

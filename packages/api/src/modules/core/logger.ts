@@ -45,7 +45,7 @@ function createPinoInstance(): pino.Logger {
   return pino(
     {
       level: stdoutLevel,
-      base: { service_name: Bun.env.SERVICE_NAME ?? 'store-pilot-api' },
+      base: { service_name: Bun.env.SERVICE_NAME ?? 'back-stock-api' },
       mixin: () => {
         const reqCtx = getRequestContext();
         return reqCtx ? { request_id: reqCtx.request_id, client_ip: reqCtx.client_ip } : {};

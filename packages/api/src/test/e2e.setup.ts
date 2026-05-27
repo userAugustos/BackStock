@@ -2,12 +2,12 @@ import { beforeAll } from 'bun:test';
 import type { edenTreaty } from '@elysiajs/eden';
 
 import { startApi } from '@api/app';
-import type { StorePilotApi } from '@api/app';
+import type { BackStockApi } from '@api/app';
 import { config } from '@core/env';
 
 import { createApi } from './test.utils';
 
-export let api: ReturnType<typeof edenTreaty<StorePilotApi>>;
+export let api: ReturnType<typeof edenTreaty<BackStockApi>>;
 
 let setupPromise: Promise<void> | null = null;
 

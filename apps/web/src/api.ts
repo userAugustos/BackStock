@@ -1,15 +1,15 @@
 import { edenTreaty } from '@elysiajs/eden';
 import type { z } from 'zod';
 
-import type { StorePilotApi as StorePilotApiType } from '@store-pilot/api/client';
+import type { BackStockApi as BackStockApiType } from '@back-stock/api/client';
 
 import { webEnv } from '@/modules/core/lib/env';
 
 const API_URL = webEnv.api.baseUrl;
 
-export const storePilotPublicApi = edenTreaty<StorePilotApiType>(API_URL);
+export const backStockPublicApi = edenTreaty<BackStockApiType>(API_URL);
 
-export const storePilotApi = storePilotPublicApi;
+export const backStockApi = backStockPublicApi;
 
 interface ErrorPayload {
   value: {
@@ -39,7 +39,7 @@ type EdenResponse<T> = Promise<{ data: T; error: null } | { data: null; error: a
  * Generic API call wrapper. Extracts errors, optionally parses with Zod.
  *
  * @example
- * const data = await apiCall<MyType>(() => storePilotApi.healthz.get());
+ * const data = await apiCall<MyType>(() => backStockApi.healthz.get());
  */
 export async function apiCall<T>(
   request: () => EdenResponse<unknown>,
