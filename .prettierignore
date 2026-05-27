@@ -1,0 +1,6 @@
+**/dist/**
+**/.turbo/**
+**/routeTree.gen.ts
+**/*.gen.ts
+bun.lock
+data
