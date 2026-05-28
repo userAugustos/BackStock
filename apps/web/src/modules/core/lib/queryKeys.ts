@@ -11,5 +11,8 @@ export const queryKeys = {
   },
   runs: {
     detail: (runId: string) => ['runs', runId] as const,
+    timeline: (runId: string) => ['runs', runId, 'timeline'] as const,
+    impact: (runId: string) => ['runs', runId, 'impact'] as const,
+    decision: (runId: string, seq: number) => ['runs', runId, 'decisions', seq] as const,
   },
 } as const;

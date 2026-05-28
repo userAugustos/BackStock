@@ -19,9 +19,13 @@ export const backStockApi = backStockPublicApi;
  */
 type DayNode = NonNullable<(typeof backStockApi.days)[string]>;
 type RunNode = NonNullable<(typeof backStockApi.runs)[string]>;
+type RunDecisionNode = NonNullable<RunNode['decisions'][string]>;
 
 export const dayApi = (dayId: string): DayNode => backStockApi.days[dayId] as DayNode;
 export const runApi = (runId: string): RunNode => backStockApi.runs[runId] as RunNode;
+
+export const runDecisionApi = (runId: string, seq: number): RunDecisionNode =>
+  runApi(runId).decisions[seq] as RunDecisionNode;
 
 interface ErrorPayload {
   value: {
