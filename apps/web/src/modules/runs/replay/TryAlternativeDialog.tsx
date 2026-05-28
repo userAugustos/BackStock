@@ -41,11 +41,34 @@ interface TryAlternativeDialogProps {
   trigger: React.ReactNode;
 }
 
+/**
+ * Coerce the parsed decision's numeric fields to real JS numbers so a stray
+ * locale-formatted value (e.g. "3,99") can never poison the form default.
+ */
 function overrideDefaults(decision: RunDecision): BranchRunBody {
+  const parsed =
+    decision.parsed.agent === 'inventory'
+      ? { ...decision.parsed, order_cases: Number(decision.parsed.order_cases) }
+      : { ...decision.parsed, new_price: Number(decision.parsed.new_price) };
   return {
     at_event_seq: decision.event_seq,
-    change: { type: 'decision_override', decision: decision.parsed },
+    change: { type: 'decision_override', decision: parsed },
   };
+}
+
+/**
+ * Render a numeric form value as a `.`-decimal string. `<input type="number">`
+ * paints the OS locale separator (so 3.99 shows as "3,99" on comma locales);
+ * a text input rendering `String(n)` keeps the displayed value dot-decimal.
+ */
+function numberInputValue(value: unknown): string {
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+}
+
+/** Parse a typed value locale-independently; NaN (rejected by Zod) when blank/invalid. */
+function parseNumberInput(raw: string): number {
+  if (raw.trim() === '') return Number.NaN;
+  return Number(raw.replace(',', '.'));
 }
 
 export function TryAlternativeDialog({ runId, decision, trigger }: TryAlternativeDialogProps) {
@@ -136,11 +159,10 @@ export function TryAlternativeDialog({ runId, decision, trigger }: TryAlternativ
                       <Input
                         id="alt-order-cases"
                         data-testid="alt-order-cases"
-                        type="number"
-                        min={0}
-                        step={1}
-                        value={Number.isNaN(field.value) ? '' : (field.value as number)}
-                        onChange={(event) => field.onChange(event.target.valueAsNumber)}
+                        type="text"
+                        inputMode="numeric"
+                        value={numberInputValue(field.value)}
+                        onChange={(event) => field.onChange(parseNumberInput(event.target.value))}
                         onBlur={field.onBlur}
                         aria-invalid={hasOverrideError(form, 'order_cases')}
                       />
@@ -161,11 +183,10 @@ export function TryAlternativeDialog({ runId, decision, trigger }: TryAlternativ
                       <Input
                         id="alt-new-price"
                         data-testid="alt-new-price"
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={Number.isNaN(field.value) ? '' : (field.value as number)}
-                        onChange={(event) => field.onChange(event.target.valueAsNumber)}
+                        type="text"
+                        inputMode="decimal"
+                        value={numberInputValue(field.value)}
+                        onChange={(event) => field.onChange(parseNumberInput(event.target.value))}
                         onBlur={field.onBlur}
                         aria-invalid={hasOverrideError(form, 'new_price')}
                       />

@@ -7,7 +7,7 @@ export const PLAYBACK_SPEEDS = [0.5, 1, 2] as const;
 export type PlaybackSpeed = (typeof PLAYBACK_SPEEDS)[number];
 
 /** Base tick interval in ms at 1x; higher speeds divide this. */
-export const BASE_TICK_MS = 900;
+const BASE_TICK_MS = 900;
 
 export interface PlaybackState {
   status: PlaybackStatus;

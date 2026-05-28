@@ -13,7 +13,7 @@ export function IgnoredReport({ report, testid = 'ignored-report' }: IgnoredRepo
   if (!report || report.length === 0) {
     return (
       <div data-testid={`${testid}-empty`} className="text-muted-foreground text-sm">
-        No events ignored — all events were recognized.
+        No events ignored: all events were recognized.
       </div>
     );
   }

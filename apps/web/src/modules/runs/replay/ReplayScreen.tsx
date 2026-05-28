@@ -1,5 +1,5 @@
 import { Activity, Boxes, Brain, GaugeCircle, Truck } from 'lucide-react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 
 import type { DayEvent } from '@back-stock/api/days';
 import type { Run, RunImpact, RunTimelineStep } from '@back-stock/api/runs';
@@ -31,18 +31,18 @@ export function ReplayScreen({ run, timeline, impact, events }: ReplayScreenProp
   const currentStep = timeline[playback.index] ?? timeline[0]!;
 
   return (
-    <motion.div
+    <m.div
       data-testid="replay-screen"
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="space-y-6"
     >
-      <motion.div variants={staggerItem}>
+      <m.div variants={staggerItem}>
         <ReplayHeader run={run} />
-      </motion.div>
+      </m.div>
 
-      <motion.div variants={staggerItem}>
+      <m.div variants={staggerItem}>
         <Card data-testid="timeline-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -59,11 +59,11 @@ export function ReplayScreen({ run, timeline, impact, events }: ReplayScreenProp
             />
           </CardContent>
         </Card>
-      </motion.div>
+      </m.div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
         <div className="space-y-6">
-          <motion.div variants={staggerItem}>
+          <m.div variants={staggerItem}>
             <Card data-testid="store-state-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -79,9 +79,9 @@ export function ReplayScreen({ run, timeline, impact, events }: ReplayScreenProp
                 />
               </CardContent>
             </Card>
-          </motion.div>
+          </m.div>
 
-          <motion.div variants={staggerItem}>
+          <m.div variants={staggerItem}>
             <Card data-testid="order-track-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -93,11 +93,11 @@ export function ReplayScreen({ run, timeline, impact, events }: ReplayScreenProp
                 <OrderTrack orders={currentStep.order_state} />
               </CardContent>
             </Card>
-          </motion.div>
+          </m.div>
         </div>
 
         <div className="space-y-6">
-          <motion.div variants={staggerItem}>
+          <m.div variants={staggerItem}>
             <Card data-testid="impact-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -109,9 +109,9 @@ export function ReplayScreen({ run, timeline, impact, events }: ReplayScreenProp
                 <ImpactSummary impact={impact} />
               </CardContent>
             </Card>
-          </motion.div>
+          </m.div>
 
-          <motion.div variants={staggerItem}>
+          <m.div variants={staggerItem}>
             <Card data-testid="decision-card-wrapper">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -127,10 +127,10 @@ export function ReplayScreen({ run, timeline, impact, events }: ReplayScreenProp
                 />
               </CardContent>
             </Card>
-          </motion.div>
+          </m.div>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 

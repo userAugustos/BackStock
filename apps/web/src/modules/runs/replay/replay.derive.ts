@@ -112,7 +112,7 @@ function parseClock(time: string): number | null {
  * Position a store-clock time along the 08:00 → 22:00 axis as a 0..1 fraction,
  * clamped so off-hours events still render at the rail edges.
  */
-export function clockToPosition(time: string): number {
+function clockToPosition(time: string): number {
   const hours = parseClock(time);
   if (hours === null) return 0;
   const span = STORE_CLOSE_HOUR - STORE_OPEN_HOUR;
@@ -125,7 +125,7 @@ export function clockToPosition(time: string): number {
  * NEXT step, so the playhead step for event `e` is its array index + 1.
  */
 export function buildEventMarkers(events: DayEvent[]): EventMarker[] {
-  const sorted = [...events].sort((a, b) => a.seq - b.seq);
+  const sorted = events.toSorted((a, b) => a.seq - b.seq);
   return sorted.map((event, idx) => ({
     seq: event.seq,
     type: event.type,

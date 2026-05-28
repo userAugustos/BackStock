@@ -1,5 +1,5 @@
 import { AlertTriangle, Boxes, CheckCircle2, GitBranch, Tag } from 'lucide-react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 
 import type { RunDecision } from '@back-stock/api/runs';
 
@@ -34,7 +34,7 @@ export function DecisionCard({ runId, decision }: DecisionCardProps) {
   const AgentIcon = isInventory ? Boxes : Tag;
 
   return (
-    <motion.div
+    <m.div
       key={decision.event_seq}
       data-testid="decision-card"
       data-valid={decision.valid}
@@ -44,13 +44,13 @@ export function DecisionCard({ runId, decision }: DecisionCardProps) {
       transition={cardEnter.transition}
       className="bg-card rounded-2xl p-5 shadow-[var(--elevation-2)] ring-1 ring-white/[0.06]"
     >
-      <motion.div
+      <m.div
         initial="hidden"
         animate="show"
         variants={{ show: { transition: { staggerChildren: 0.06 } } }}
         className="space-y-4"
       >
-        <motion.div
+        <m.div
           variants={itemVariants}
           className="flex flex-wrap items-center justify-between gap-2"
         >
@@ -77,18 +77,18 @@ export function DecisionCard({ runId, decision }: DecisionCardProps) {
           <span className="text-muted-foreground font-mono text-[11px] tabular-nums">
             event #{decision.event_seq} · {formatNumber(decision.latency_ms)}ms
           </span>
-        </motion.div>
+        </m.div>
 
-        <motion.div variants={itemVariants} className="flex flex-wrap gap-3 font-mono text-[11px]">
+        <m.div variants={itemVariants} className="flex flex-wrap gap-3 font-mono text-[11px]">
           <span className="text-muted-foreground">
             prompt <span className="text-foreground">{decision.prompt_version}</span>
           </span>
           <span className="text-muted-foreground">
             model <span className="text-foreground">{decision.model_id}</span>
           </span>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           variants={itemVariants}
           data-testid="decision-parsed"
           className="bg-background/50 rounded-xl px-4 py-3 ring-1 ring-white/[0.06]"
@@ -116,19 +116,19 @@ export function DecisionCard({ runId, decision }: DecisionCardProps) {
               </span>
             </div>
           )}
-        </motion.div>
+        </m.div>
 
-        <motion.p
+        <m.p
           variants={itemVariants}
           data-testid="decision-reasoning"
           className="text-muted-foreground text-sm leading-relaxed"
         >
           {decision.reasoning}
-        </motion.p>
+        </m.p>
 
         <Separator />
 
-        <motion.div variants={itemVariants}>
+        <m.div variants={itemVariants}>
           <TryAlternativeDialog
             runId={runId}
             decision={decision}
@@ -139,9 +139,9 @@ export function DecisionCard({ runId, decision }: DecisionCardProps) {
               </Button>
             }
           />
-        </motion.div>
-      </motion.div>
-    </motion.div>
+        </m.div>
+      </m.div>
+    </m.div>
   );
 }
 

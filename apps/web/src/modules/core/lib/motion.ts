@@ -18,10 +18,3 @@ export const staggerItem: Variants = {
     transition: enterSpring,
   },
 };
-
-/** Subtle exit used for list removals / route content. */
-export const fadeExit: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: enterSpring },
-  exit: { opacity: 0, y: -6, transition: { duration: 0.16 } },
-};

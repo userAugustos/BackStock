@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import type { Dispatch } from 'react';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/shadcn/tooltip';
@@ -39,7 +39,7 @@ export function Timeline({ state, dispatch, stepCount, markers }: TimelineProps)
       <div className="relative px-1 pt-6 pb-2">
         {/* Rail */}
         <div className="bg-background/70 relative h-2 rounded-full ring-1 ring-white/[0.05]">
-          <motion.div
+          <m.div
             className="bg-primary/70 absolute inset-y-0 left-0 rounded-full"
             style={{ width: `${playheadPct}%` }}
             animate={{ width: `${playheadPct}%` }}
@@ -85,7 +85,7 @@ export function Timeline({ state, dispatch, stepCount, markers }: TimelineProps)
           })}
 
           {/* Playhead */}
-          <motion.div
+          <m.div
             data-testid="timeline-playhead"
             className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 [will-change:transform]"
             style={{ left: `${playheadPct}%` }}
@@ -93,7 +93,7 @@ export function Timeline({ state, dispatch, stepCount, markers }: TimelineProps)
             transition={{ type: 'spring', duration: 0.4, bounce: 0 }}
           >
             <span className="bg-primary ring-primary/30 block size-4 rounded-full shadow-[0_0_0_4px_var(--background),var(--elevation-2)] ring-4" />
-          </motion.div>
+          </m.div>
         </div>
 
         {/* Native scrubber overlaid on the rail for keyboard + drag */}

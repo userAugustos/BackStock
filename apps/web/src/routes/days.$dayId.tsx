@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Boxes, FilterX, Truck, Zap } from 'lucide-react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/shadcn/card';
 import { Skeleton } from '@repo/ui/shadcn/skeleton';
@@ -50,20 +50,20 @@ function DayDetail() {
   const day = dayQuery.data;
 
   return (
-    <motion.div
+    <m.div
       data-testid="day-detail"
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="space-y-6"
     >
-      <motion.div variants={staggerItem}>
+      <m.div variants={staggerItem}>
         <DayHeader day={day} />
-      </motion.div>
+      </m.div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
-          <motion.div variants={staggerItem}>
+          <m.div variants={staggerItem}>
             <Card data-testid="catalog-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -75,9 +75,9 @@ function DayDetail() {
                 <CatalogTable seedState={day.seed_state} />
               </CardContent>
             </Card>
-          </motion.div>
+          </m.div>
 
-          <motion.div variants={staggerItem}>
+          <m.div variants={staggerItem}>
             <Card data-testid="events-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -103,11 +103,11 @@ function DayDetail() {
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </m.div>
         </div>
 
         <div className="space-y-6">
-          <motion.div variants={staggerItem}>
+          <m.div variants={staggerItem}>
             <Card data-testid="vendors-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -119,17 +119,17 @@ function DayDetail() {
                 <VendorsList seedState={day.seed_state} />
               </CardContent>
             </Card>
-          </motion.div>
+          </m.div>
 
-          <motion.div variants={staggerItem}>
+          <m.div variants={staggerItem}>
             <VersionsPanel />
-          </motion.div>
+          </m.div>
 
-          <motion.div variants={staggerItem}>
+          <m.div variants={staggerItem}>
             <RunTreePanel dayId={dayId} />
-          </motion.div>
+          </m.div>
 
-          <motion.div variants={staggerItem}>
+          <m.div variants={staggerItem}>
             <Card data-testid="ignored-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -141,9 +141,9 @@ function DayDetail() {
                 <IgnoredReport report={day.ignored_report} />
               </CardContent>
             </Card>
-          </motion.div>
+          </m.div>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }

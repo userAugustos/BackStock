@@ -1,5 +1,5 @@
 import type { CompareDecisionEntry, CompareStepEntry, ImpactValues } from '@back-stock/api/compare';
-import type { Decision, OrderState, SimState } from '@back-stock/api/simulation';
+import type { Decision, SimState } from '@back-stock/api/simulation';
 
 import { formatCurrency, formatNumber, formatPercentPoints } from '@/modules/core/lib/format';
 
@@ -84,10 +84,6 @@ export function deltaTone(value: number, better: BetterDirection): DeltaTone {
 /** The SDK types compare step/decision payloads as `unknown`; narrow at this boundary. */
 export function readState(entry: CompareStepEntry | undefined): SimState | null {
   return entry ? (entry.state_snapshot as SimState) : null;
-}
-
-export function readOrders(entry: CompareStepEntry | undefined): OrderState[] {
-  return entry ? (entry.order_state as OrderState[]) : [];
 }
 
 export function readDecision(entry: CompareDecisionEntry | null | undefined): Decision | null {

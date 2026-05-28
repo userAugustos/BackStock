@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 
 import type { OrderState, OrderStatus } from '@back-stock/api/simulation';
 
@@ -57,7 +57,7 @@ export function OrderTrack({ orders }: OrderTrackProps) {
         const flow = flowFor(order.status);
         const activeIndex = flow.indexOf(order.status);
         return (
-          <motion.li
+          <m.li
             key={`${order.sku_id}-${order.vendor_id}-${order.created_at_seq}-${idx}`}
             layout
             data-testid={`order-row-${order.sku_id}-${order.created_at_seq}`}
@@ -103,7 +103,7 @@ export function OrderTrack({ orders }: OrderTrackProps) {
                 );
               })}
             </div>
-          </motion.li>
+          </m.li>
         );
       })}
     </ul>

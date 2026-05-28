@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { CalendarRange } from 'lucide-react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 
 import { Skeleton } from '@repo/ui/shadcn/skeleton';
 import { staggerContainer, staggerItem } from '@/modules/core/lib/motion';
@@ -52,7 +52,7 @@ function DaysIndex() {
           testid="days-empty"
         />
       ) : (
-        <motion.ul
+        <m.ul
           data-testid="days-grid"
           variants={staggerContainer}
           initial="hidden"
@@ -60,11 +60,11 @@ function DaysIndex() {
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           {query.data.map((day) => (
-            <motion.li key={day.id} variants={staggerItem}>
+            <m.li key={day.id} variants={staggerItem}>
               <DayCard day={day} />
-            </motion.li>
+            </m.li>
           ))}
-        </motion.ul>
+        </m.ul>
       )}
     </div>
   );

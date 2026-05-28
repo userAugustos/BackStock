@@ -141,7 +141,7 @@ function TimelineCell({
             {totals.inventoryUnits} u
           </span>
         ) : (
-          <span className="text-muted-foreground/50 block font-mono text-xs">—</span>
+          <span className="text-muted-foreground/50 block font-mono text-xs">–</span>
         )}
         {decision ? (
           <span

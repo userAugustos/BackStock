@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
 import type { Run } from '@back-stock/api/runs';
-import type { ForkChange } from '@back-stock/api/simulation';
 
 import {
   formatCurrency,
@@ -10,16 +9,7 @@ import {
   shortId,
 } from '@/modules/core/lib/format';
 import { runImpactQueryOptions } from '@/modules/runs/runs.queries';
-
-export function describeForkChange(change: ForkChange | null): string {
-  if (!change) return 'forked run';
-  if (change.type === 'version') return `version → ${shortId(change.version_id)}`;
-  const decision = change.decision;
-  if (decision.agent === 'inventory') {
-    return `override ${decision.sku_id} → ${formatNumber(decision.order_cases)} cases`;
-  }
-  return `override ${decision.sku_id} → ${formatCurrency(decision.new_price)}`;
-}
+import { describeForkChange } from '@/modules/runs/tree/forkChange';
 
 export function RunNodeTooltip({ run }: { run: Run }) {
   const isDone = run.status === 'done';

@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 
 import type { CompareResult, ImpactDelta, ImpactValues } from '@back-stock/api/compare';
 
@@ -19,7 +19,7 @@ export function ImpactScoreboard({ result, colors }: ImpactScoreboardProps) {
   const runIds = result.runs.map((run) => run.run_id);
 
   return (
-    <motion.div
+    <m.div
       data-testid="impact-scoreboard"
       variants={staggerContainer}
       initial="hidden"
@@ -36,7 +36,7 @@ export function ImpactScoreboard({ result, colors }: ImpactScoreboardProps) {
           colors={colors}
         />
       ))}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -50,7 +50,7 @@ interface MetricCardProps {
 
 function MetricCard({ metric, runIds, perRun, deltas, colors }: MetricCardProps) {
   return (
-    <motion.div
+    <m.div
       variants={staggerItem}
       data-testid={`scoreboard-metric-${metric.testid}`}
       className="bg-card rounded-2xl p-4 shadow-[var(--elevation-1)] ring-1 ring-white/[0.06]"
@@ -108,7 +108,7 @@ function MetricCard({ metric, runIds, perRun, deltas, colors }: MetricCardProps)
           })}
         </div>
       ) : null}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -143,13 +143,13 @@ function DeltaRow({
         {shortId(pair[0])} → {shortId(pair[1])}
       </span>
       <span className={cn('inline-flex items-center gap-1 font-medium', TONE_CLASS[tone])}>
-        <motion.span
+        <m.span
           initial={{ y: value === 0 ? 0 : value > 0 ? 3 : -3, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
         >
           <Arrow className="size-3" />
-        </motion.span>
+        </m.span>
         {sign}
         {format(value)}
       </span>

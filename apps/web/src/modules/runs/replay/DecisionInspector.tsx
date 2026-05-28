@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Brain } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 
 import { Skeleton } from '@repo/ui/shadcn/skeleton';
 import { EmptyPanel } from '@/modules/core/StatePanels';
@@ -30,7 +30,7 @@ export function DecisionInspector({ runId, stepIndex, decisionPointSeqs }: Decis
         </AnimatePresence>
       ) : (
         <AnimatePresence mode="wait">
-          <motion.div
+          <m.div
             key="no-decision"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -43,7 +43,7 @@ export function DecisionInspector({ runId, stepIndex, decisionPointSeqs }: Decis
               icon={<Brain className="size-5" />}
               testid="decision-empty"
             />
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       )}
     </div>

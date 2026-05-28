@@ -26,7 +26,6 @@
     "@repo/ui": "*",
     "@back-stock/api": "*",
     "@tanstack/react-query": "^5.81.2",
-    "@tanstack/react-query-devtools": "^5.81.2",
     "@tanstack/react-router": "^1.121.34",
     "lucide-react": "^1.16.0",
     "motion": "^12.40.0",

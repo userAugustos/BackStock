@@ -1,6 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { GitCompareArrows, X } from 'lucide-react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 
 import type { Run } from '@back-stock/api/runs';
 
@@ -80,7 +80,7 @@ export function RunTree({ runs }: RunTreeProps) {
         </div>
       ) : null}
 
-      <motion.ol
+      <m.ol
         variants={staggerContainer}
         initial="hidden"
         animate="show"
@@ -88,7 +88,7 @@ export function RunTree({ runs }: RunTreeProps) {
         data-testid="run-tree-graph"
       >
         {rows.map((row) => (
-          <motion.li
+          <m.li
             key={row.run.id}
             variants={staggerItem}
             className="flex items-stretch"
@@ -99,9 +99,9 @@ export function RunTree({ runs }: RunTreeProps) {
               <RunTreeNode run={row.run} />
               {row.run.parent_run_id !== null ? <ForkEdgeTag run={row.run} /> : null}
             </div>
-          </motion.li>
+          </m.li>
         ))}
-      </motion.ol>
+      </m.ol>
 
       <p className="text-muted-foreground/70 text-[11px]">
         Click a node to replay it. Select 2–3 nodes to{' '}

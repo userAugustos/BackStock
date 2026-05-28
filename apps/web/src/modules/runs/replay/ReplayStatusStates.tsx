@@ -1,5 +1,5 @@
 import { Radar, XCircle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 
 import type { RunStatus } from '@back-stock/api/runs';
 
@@ -21,18 +21,18 @@ export function ExecutingState({ status }: ExecutingStateProps) {
       className="bg-card flex flex-col items-center gap-5 rounded-2xl p-12 text-center shadow-[var(--elevation-1)] ring-1 ring-white/[0.05]"
     >
       <div className="relative grid size-20 place-items-center">
-        <motion.span
+        <m.span
           className="border-primary/30 absolute inset-0 rounded-full border"
           animate={{ scale: [1, 1.35], opacity: [0.6, 0] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
         />
-        <motion.span
+        <m.span
           className="bg-primary/10 text-primary grid size-14 place-items-center rounded-full [&_svg]:size-6"
           animate={{ rotate: 360 }}
           transition={{ duration: 3.2, repeat: Infinity, ease: 'linear' }}
         >
           <Radar />
-        </motion.span>
+        </m.span>
       </div>
 
       <div className="space-y-2">

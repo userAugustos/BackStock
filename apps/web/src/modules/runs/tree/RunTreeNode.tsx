@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/shadcn/tooltip
 import { cn } from '@repo/ui/utils';
 import { COMPARE_MAX_RUNS, useCompareStore } from '@/modules/compare/store';
 import { shortId } from '@/modules/core/lib/format';
-import { describeForkChange, RunNodeTooltip } from '@/modules/runs/tree/RunNodeTooltip';
+import { RunNodeTooltip } from '@/modules/runs/tree/RunNodeTooltip';
 
 const STATUS_DOT: Record<RunStatus, { tone: string; pulse: boolean; label: string }> = {
   queued: { tone: 'bg-muted-foreground/60', pulse: false, label: 'queued' },
@@ -95,7 +95,7 @@ export function RunTreeNode({ run }: RunTreeNodeProps) {
         </TooltipTrigger>
       </div>
 
-      <TooltipContent side="right" className="p-3">
+      <TooltipContent side="left" collisionPadding={12} className="p-3">
         <RunNodeTooltip run={run} />
       </TooltipContent>
     </Tooltip>
@@ -119,5 +119,3 @@ function forkType(run: Run): string {
   if (!run.fork_change) return 'fork';
   return run.fork_change.type === 'version' ? 'version' : 'override';
 }
-
-export { describeForkChange };

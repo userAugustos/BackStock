@@ -40,16 +40,16 @@ export function CatalogTable({ seedState }: CatalogTableProps) {
               <TableCell className="text-right font-mono tabular-nums">
                 {formatCurrency(sku.price)}
               </TableCell>
-              <TableCell className="text-muted-foreground text-right font-mono tabular-nums">
+              <TableCell className="text-foreground text-right font-mono tabular-nums">
                 {formatCurrency(sku.unit_cost)}
               </TableCell>
               <TableCell className="text-right font-mono text-[var(--good)] tabular-nums">
                 {(margin * 100).toFixed(0)}%
               </TableCell>
-              <TableCell className="text-muted-foreground text-right font-mono tabular-nums">
+              <TableCell className="text-foreground text-right font-mono tabular-nums">
                 {formatNumber(sku.shelf_life_hours)}h
               </TableCell>
-              <TableCell className="text-muted-foreground text-right font-mono tabular-nums">
+              <TableCell className="text-foreground text-right font-mono tabular-nums">
                 {formatNumber(sku.case_size)}
               </TableCell>
             </TableRow>

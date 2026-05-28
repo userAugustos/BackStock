@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, BarChart3, GitFork, ListTree, Trophy } from 'lucide-react';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 
 import type { CompareResult, CompareRunMeta } from '@back-stock/api/compare';
 
@@ -26,18 +26,18 @@ export function CompareScreen({ result }: CompareScreenProps) {
   const colors = buildRunColors(result.runs);
 
   return (
-    <motion.div
+    <m.div
       data-testid="compare-screen"
       variants={staggerContainer}
       initial="hidden"
       animate="show"
       className="space-y-6"
     >
-      <motion.div variants={staggerItem}>
+      <m.div variants={staggerItem}>
         <CompareHeader result={result} colors={colors} />
-      </motion.div>
+      </m.div>
 
-      <motion.div variants={staggerItem}>
+      <m.div variants={staggerItem}>
         <Card data-testid="scoreboard-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -49,9 +49,9 @@ export function CompareScreen({ result }: CompareScreenProps) {
             <ImpactScoreboard result={result} colors={colors} />
           </CardContent>
         </Card>
-      </motion.div>
+      </m.div>
 
-      <motion.div variants={staggerItem}>
+      <m.div variants={staggerItem}>
         <Card data-testid="bar-chart-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -63,9 +63,9 @@ export function CompareScreen({ result }: CompareScreenProps) {
             <ImpactBarChart result={result} colors={colors} />
           </CardContent>
         </Card>
-      </motion.div>
+      </m.div>
 
-      <motion.div variants={staggerItem}>
+      <m.div variants={staggerItem}>
         <Card data-testid="aligned-timeline-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -80,8 +80,8 @@ export function CompareScreen({ result }: CompareScreenProps) {
             <AlignedTimeline result={result} colors={colors} />
           </CardContent>
         </Card>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }
 

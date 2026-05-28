@@ -32,7 +32,7 @@ function sortChildren(a: RunTreeNode, b: RunTreeNode): number {
  * parent. Orphans (parent missing from the set) are treated as additional roots
  * so nothing is silently dropped.
  */
-export function buildRunForest(runs: Run[]): RunTreeNode[] {
+function buildRunForest(runs: Run[]): RunTreeNode[] {
   const nodes = new Map<string, RunTreeNode>();
   for (const run of runs) {
     nodes.set(run.id, { run, depth: 0, parentId: run.parent_run_id, children: [] });
@@ -61,7 +61,7 @@ export function buildRunForest(runs: Run[]): RunTreeNode[] {
 }
 
 /** Flatten the forest to a draw order (pre-order DFS) with parent-row anchors. */
-export function flattenRunForest(roots: RunTreeNode[]): RunTreeRow[] {
+function flattenRunForest(roots: RunTreeNode[]): RunTreeRow[] {
   const rows: RunTreeRow[] = [];
   const indexById = new Map<string, number>();
 

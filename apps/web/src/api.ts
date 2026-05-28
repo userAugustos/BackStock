@@ -7,9 +7,7 @@ import { webEnv } from '@/modules/core/lib/env';
 
 const API_URL = webEnv.api.baseUrl;
 
-export const backStockPublicApi = edenTreaty<BackStockApiType>(API_URL);
-
-export const backStockApi = backStockPublicApi;
+export const backStockApi = edenTreaty<BackStockApiType>(API_URL);
 
 /**
  * Eden's classic treaty models dynamic path segments as an index signature, so
