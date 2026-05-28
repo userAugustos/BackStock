@@ -13,7 +13,7 @@ import { dayDetailQueryOptions, dayEventsQueryOptions } from '@/modules/days/day
 import { EventsTable } from '@/modules/days/EventsTable';
 import { IgnoredReport } from '@/modules/days/IgnoredReport';
 import { VendorsList } from '@/modules/days/VendorsList';
-import { RunsList } from '@/modules/runs/RunsList';
+import { RunTreePanel } from '@/modules/runs/tree/RunTreePanel';
 import { VersionsPanel } from '@/modules/versions/VersionsPanel';
 
 export const Route = createFileRoute('/days/$dayId')({
@@ -126,7 +126,7 @@ function DayDetail() {
           </motion.div>
 
           <motion.div variants={staggerItem}>
-            <RunsList dayId={dayId} />
+            <RunTreePanel dayId={dayId} />
           </motion.div>
 
           <motion.div variants={staggerItem}>

@@ -15,4 +15,7 @@ export const queryKeys = {
     impact: (runId: string) => ['runs', runId, 'impact'] as const,
     decision: (runId: string, seq: number) => ['runs', runId, 'decisions', seq] as const,
   },
+  compare: {
+    runs: (runIds: readonly string[]) => ['compare', ...runIds] as const,
+  },
 } as const;
