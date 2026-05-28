@@ -103,10 +103,7 @@ export async function compareRuns(runIds: string[]): Promise<CompareResult> {
     Promise.all(runs.map((r) => findImpactByRunId(r.id))),
   ]);
 
-  const maxStepSeq = Math.max(
-    ...allSteps.flatMap((steps) => steps.map((s) => s.seq)),
-    0,
-  );
+  const maxStepSeq = Math.max(...allSteps.flatMap((steps) => steps.map((s) => s.seq)), 0);
 
   const decisionsByRunAndSeq = new Map<
     string,
