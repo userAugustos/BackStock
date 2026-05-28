@@ -27,6 +27,10 @@
       "types": "./dist/runs.d.ts",
       "import": "./dist/runs.js"
     },
+    "./simulation": {
+      "types": "./dist/simulation.d.ts",
+      "import": "./dist/simulation.js"
+    },
     "./compare": {
       "types": "./dist/compare.d.ts",
       "import": "./dist/compare.js"

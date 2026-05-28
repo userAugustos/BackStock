@@ -8,20 +8,22 @@ import {
   insertDay,
   insertEvents,
 } from './days.repository';
+import type { IgnoredEvent } from './days.normalizer';
 import type { CreateDayBody, SeedState } from './days.schemas';
+import type { CreateDayResult, DayDetail, DayEvent, DayListItem, DaySource } from './days.types';
 
 function deserializeSeedState(raw: string): SeedState {
   return JSON.parse(raw) as SeedState;
 }
 
-export async function listDays() {
+export async function listDays(): Promise<DayListItem[]> {
   const rows = await findAllDays();
   return rows.map((row) => {
     const seedState = deserializeSeedState(row.seedState);
     return {
       id: row.id,
       name: row.name,
-      source: row.source,
+      source: row.source as DaySource,
       sku_count: seedState.skus.length,
       event_count: row.eventCount,
       created_at: row.createdAt,
@@ -34,7 +36,7 @@ export async function listDays() {
  * The stored events are normalized first so every persisted day has contiguous
  * event sequences and carries an ignored-event report when upload rows are skipped.
  */
-export async function createDay(body: CreateDayBody) {
+export async function createDay(body: CreateDayBody): Promise<CreateDayResult> {
   const { accepted_events, ignored_report } = normalizeDayEvents(body.seed_state, body.events);
 
   const dayRow = await insertDay({
@@ -49,7 +51,7 @@ export async function createDay(body: CreateDayBody) {
   return {
     id: dayRow.id,
     name: dayRow.name,
-    source: dayRow.source,
+    source: dayRow.source as DaySource,
     sku_count: body.seed_state.skus.length,
     event_count: accepted_events.length,
     ignored_report,
@@ -57,7 +59,7 @@ export async function createDay(body: CreateDayBody) {
   };
 }
 
-export async function getDay(id: string) {
+export async function getDay(id: string): Promise<DayDetail> {
   const row = await findDayById(id);
   if (!row) {
     throw notFound('day_not_found', `Day '${id}' not found`);
@@ -66,16 +68,16 @@ export async function getDay(id: string) {
   return {
     id: row.id,
     name: row.name,
-    source: row.source,
+    source: row.source as DaySource,
     seed_state: seedState,
     sku_count: seedState.skus.length,
     event_count: row.eventCount,
-    ignored_report: row.ignoredReport ? JSON.parse(row.ignoredReport) : null,
+    ignored_report: row.ignoredReport ? (JSON.parse(row.ignoredReport) as IgnoredEvent[]) : null,
     created_at: row.createdAt,
   };
 }
 
-export async function getDayEvents(dayId: string) {
+export async function getDayEvents(dayId: string): Promise<DayEvent[]> {
   const day = await findDayById(dayId);
   if (!day) {
     throw notFound('day_not_found', `Day '${dayId}' not found`);
