@@ -40,6 +40,10 @@ export function findRunById(id: string) {
     .then((rows) => rows[0]);
 }
 
+export function findRunsByDayId(dayId: string) {
+  return db.select().from(runs).where(eq(runs.dayId, dayId)).orderBy(runs.createdAt);
+}
+
 export function updateRunStatus(id: string, status: string, completedAt?: string) {
   return db
     .update(runs)

@@ -11,6 +11,7 @@ import {
   findDecisionByRunAndSeq,
   findImpactByRunId,
   findRunById,
+  findRunsByDayId,
   findRunStepsByRunId,
   insertRun,
   updateRunStatus,
@@ -80,6 +81,25 @@ export async function getRun(id: string) {
     decisions_total: total,
     decisions_failed: failed,
   };
+}
+
+export async function listRunsForDay(dayId: string) {
+  const day = await findDayById(dayId);
+  if (!day) throw notFound('day_not_found', `Day '${dayId}' not found`);
+
+  const rows = await findRunsByDayId(dayId);
+  return rows.map((row) => ({
+    id: row.id,
+    day_id: row.dayId,
+    version_id: row.versionId,
+    parent_run_id: row.parentRunId,
+    fork_event_seq: row.forkEventSeq,
+    fork_change: row.forkChange ? JSON.parse(row.forkChange) : null,
+    status: row.status,
+    label: row.label,
+    created_at: row.createdAt,
+    completed_at: row.completedAt,
+  }));
 }
 
 export async function getRunTimeline(runId: string) {

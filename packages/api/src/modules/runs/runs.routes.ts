@@ -9,6 +9,7 @@ import {
   RunDecisionParamsSchema,
   RunDetailEnvelopeSchema,
   RunImpactEnvelopeSchema,
+  RunListEnvelopeSchema,
   RunParamsSchema,
   RunTimelineEnvelopeSchema,
   StartRunBodySchema,
@@ -20,6 +21,7 @@ import {
   getRunDecision,
   getRunImpact,
   getRunTimeline,
+  listRunsForDay,
   startRun,
 } from './runs.service';
 
@@ -39,6 +41,23 @@ export const runsRoutes = new Elysia({ name: 'routes.runs' })
         summary: 'Start Run',
         description:
           'Creates a queued simulation run for a day and version, then publishes the run request to RabbitMQ.',
+        tags: ['runs'],
+      },
+    }
+  )
+  .get(
+    '/days/:id/runs',
+    async ({ params }) => {
+      const data = await listRunsForDay(params.id);
+      return { data };
+    },
+    {
+      params: DayRunParamsSchema,
+      response: { 200: RunListEnvelopeSchema },
+      detail: {
+        summary: 'List Runs For Day',
+        description:
+          'Returns every run (root + forked branches) created for a given day, ordered by creation time.',
         tags: ['runs'],
       },
     }
