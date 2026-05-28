@@ -27,7 +27,7 @@ const VALID_SEED_STATE = {
       case_size: 12,
     },
   ],
-  vendors: [{ id: 'dairy-co', lead_time_hours: 18, next_delivery_at: '10:00' }],
+  vendors: [{ id: 'dairy-co', lead_time_hours: 18, next_delivery_at: '2026-03-18T10:00:00' }],
 };
 
 async function postDay(overrides: Record<string, unknown> = {}) {
@@ -137,6 +137,38 @@ describe('days', () => {
     expect(d3b.data.ignored_report).toHaveLength(1);
     expect(d3b.data.ignored_report[0].reason).toBe('unknown_vendor');
 
+    const r3c = await postDay({
+      name: `invalid-payload-${crypto.randomUUID()}`,
+      events: [
+        {
+          seq: 0,
+          at: '08:00',
+          type: 'sales_spike',
+          payload: { sku: 'milk-2pct-gal', multiplier: 2.0 },
+        },
+        {
+          seq: 1,
+          at: '09:00',
+          type: 'sales_spike',
+          payload: { multiplier: 2.0 },
+        },
+        {
+          seq: 2,
+          at: '10:00',
+          type: 'damage_report',
+          payload: { sku: 'produce-lettuce', units: 'five' },
+        },
+      ],
+    });
+    expect(r3c.status).toBe(201);
+    const d3c = (await r3c.json()) as any;
+    expect(d3c.data.event_count).toBe(1);
+    expect(d3c.data.ignored_report).toHaveLength(2);
+    expect(d3c.data.ignored_report.map((item: any) => item.reason)).toEqual([
+      'invalid_payload',
+      'invalid_payload',
+    ]);
+
     // 4. POST all events ignored -> 400
     const r4 = await postDay({
       name: `all-ignored-${crypto.randomUUID()}`,
@@ -148,6 +180,17 @@ describe('days', () => {
     expect(r4.status).toBe(400);
     const d4 = (await r4.json()) as any;
     expect(d4.error).toBe('all_events_ignored');
+
+    const r4b = await postDay({
+      name: `all-invalid-known-${crypto.randomUUID()}`,
+      events: [
+        { seq: 0, at: '08:00', type: 'sales_spike', payload: { multiplier: 2.0 } },
+        { seq: 1, at: '09:00', type: 'vendor_delay', payload: { delay_hours: 4 } },
+      ],
+    });
+    expect(r4b.status).toBe(400);
+    const d4b = (await r4b.json()) as any;
+    expect(d4b.error).toBe('all_events_ignored');
 
     // 5. POST duplicate seq -> 400
     const r5 = await postDay({

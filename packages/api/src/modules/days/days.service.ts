@@ -29,6 +29,11 @@ export async function listDays() {
   });
 }
 
+/**
+ * Creates a day from an uploaded seed state and event stream.
+ * The stored events are normalized first so every persisted day has contiguous
+ * event sequences and carries an ignored-event report when upload rows are skipped.
+ */
 export async function createDay(body: CreateDayBody) {
   const { accepted_events, ignored_report } = normalizeDayEvents(body.seed_state, body.events);
 

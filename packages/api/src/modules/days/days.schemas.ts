@@ -12,7 +12,7 @@ export const SkuSchema = z.object({
 export const VendorSchema = z.object({
   id: z.string().min(1),
   lead_time_hours: z.number().positive(),
-  next_delivery_at: z.string().min(1),
+  next_delivery_at: z.string().datetime({ local: true }),
 });
 
 export const SeedStateSchema = z.object({
@@ -32,6 +32,43 @@ export const CreateDayBodySchema = z.object({
   seed_state: SeedStateSchema,
   events: z.array(EventInputSchema).min(1),
 });
+
+export const DayParamsSchema = z.object({
+  id: z.string().min(1),
+});
+
+export const IgnoredEventSchema = z.object({
+  original_seq: z.number().int().nonnegative(),
+  type: z.string(),
+  reason: z.string(),
+});
+
+export const DayListItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  source: z.string(),
+  sku_count: z.number().int().nonnegative(),
+  event_count: z.number().int().nonnegative(),
+  created_at: z.string(),
+});
+
+export const DayDetailSchema = DayListItemSchema.extend({
+  seed_state: SeedStateSchema,
+  ignored_report: z.array(IgnoredEventSchema).nullable(),
+});
+
+export const CreateDayResponseSchema = DayListItemSchema.extend({
+  ignored_report: z.array(IgnoredEventSchema).nullable(),
+});
+
+export const DayEventSchema = EventInputSchema.extend({
+  id: z.string(),
+});
+
+export const DayListResponseSchema = z.object({ data: z.array(DayListItemSchema) });
+export const CreateDayEnvelopeSchema = z.object({ data: CreateDayResponseSchema });
+export const DayDetailResponseSchema = z.object({ data: DayDetailSchema });
+export const DayEventsResponseSchema = z.object({ data: z.array(DayEventSchema) });
 
 export const KNOWN_EVENT_TYPES = [
   'sales_spike',

@@ -32,7 +32,7 @@ const HERO_DAY: CreateDayBody = {
       {
         id: 'dairy-co',
         lead_time_hours: 18,
-        next_delivery_at: '10:00',
+        next_delivery_at: '2026-03-18T10:00:00',
       },
     ],
   },

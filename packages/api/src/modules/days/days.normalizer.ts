@@ -1,7 +1,36 @@
+import { z } from 'zod';
+
 import { badRequest } from '@core/errors';
 
 import { KNOWN_EVENT_TYPES } from './days.schemas';
 import type { EventInput, SeedState } from './days.schemas';
+
+const EventPayloadSchemas = {
+  sales_spike: z.object({
+    sku: z.string().min(1),
+    multiplier: z.number().positive(),
+  }),
+  vendor_delay: z.object({
+    vendor: z.string().min(1),
+    delay_hours: z.number().positive(),
+  }),
+  damage_report: z.object({
+    sku: z.string().min(1),
+    units: z.number().int().nonnegative(),
+  }),
+  invoice_cost_change: z.object({
+    sku: z.string().min(1),
+    new_unit_cost: z.number().positive(),
+  }),
+  promotion: z.object({
+    sku: z.string().min(1),
+    demand_multiplier: z.number().positive(),
+  }),
+  manager_override: z.object({
+    target: z.string().min(1),
+    action: z.string().min(1),
+  }),
+} satisfies Record<(typeof KNOWN_EVENT_TYPES)[number], z.ZodType>;
 
 export interface IgnoredEvent {
   original_seq: number;
@@ -14,6 +43,11 @@ export interface NormalizeResult {
   ignored_report: IgnoredEvent[] | null;
 }
 
+/**
+ * Normalizes uploaded day events into the deterministic stream used by runs.
+ * Duplicate sequence numbers fail the upload, while unknown event types, invalid
+ * payloads, and references outside the seed state are reported and ignored.
+ */
 export function normalizeDayEvents(seedState: SeedState, rawEvents: EventInput[]): NormalizeResult {
   const knownSkuIds = new Set(seedState.skus.map((s) => s.id));
   const knownVendorIds = new Set(seedState.vendors.map((v) => v.id));
@@ -38,6 +72,16 @@ export function normalizeDayEvents(seedState: SeedState, rawEvents: EventInput[]
         original_seq: event.seq,
         type: event.type,
         reason: 'unknown_event_type',
+      });
+      continue;
+    }
+
+    const payloadSchema = EventPayloadSchemas[event.type as (typeof KNOWN_EVENT_TYPES)[number]];
+    if (!payloadSchema.safeParse(event.payload).success) {
+      ignored.push({
+        original_seq: event.seq,
+        type: event.type,
+        reason: 'invalid_payload',
       });
       continue;
     }
