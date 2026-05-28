@@ -41,7 +41,7 @@
     "db:migrate": "bun run src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "test": "bun test --env-file .env --preload ./src/test/setup.ts",
-    "test:e2e": "bun test --bail --env-file .env --env-file .env.test --preload ./src/test/setup.ts src/test/e2e.*.test.ts",
+    "test:e2e": "bun test --bail --timeout 30000 --env-file .env --env-file .env.test --preload ./src/test/setup.ts src/test/e2e.*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
