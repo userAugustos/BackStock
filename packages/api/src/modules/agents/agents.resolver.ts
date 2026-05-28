@@ -1,6 +1,7 @@
 import type {
   Decision,
   DecisionAgent,
+  ResolvedDecision,
   SimEvent,
   SimState,
 } from '@api/modules/simulation/simulation.types';
@@ -17,7 +18,6 @@ const agentLogger = logger.child({ domain: 'agents' });
 interface LlmResolverConfig {
   client: LlmClient;
   catalogSkuIds: string[];
-  currentPrices: Record<string, number>;
   modelId: string;
   inventoryPromptVersion: string;
   pricingPromptVersion: string;
@@ -48,14 +48,13 @@ function buildUserMessage(agent: DecisionAgent, context: SimState, event: SimEve
   });
 }
 
-function getSchemaForAgent(
-  agent: DecisionAgent,
-  catalogSkuIds: string[],
-  currentPrices: Record<string, number>
-) {
+function getSchemaForAgent(agent: DecisionAgent, catalogSkuIds: string[], context: SimState) {
   if (agent === 'inventory') {
     return inventoryResponseSchema(catalogSkuIds);
   }
+  const currentPrices = Object.fromEntries(
+    Object.entries(context.skus).map(([skuId, sku]) => [skuId, sku.price])
+  );
   return pricingResponseSchema(catalogSkuIds, currentPrices);
 }
 
@@ -85,18 +84,30 @@ function parsedToDecision(agent: DecisionAgent, parsed: Record<string, unknown>)
 
 export function createLlmDecisionResolver(
   config: LlmResolverConfig
-): (agent: DecisionAgent, context: SimState, event: SimEvent) => Promise<Decision> {
-  const {
-    client,
-    catalogSkuIds,
-    currentPrices,
-    modelId,
-    inventoryPromptVersion,
-    pricingPromptVersion,
-  } = config;
+): (agent: DecisionAgent, context: SimState, event: SimEvent) => Promise<ResolvedDecision> {
+  const { client, catalogSkuIds, modelId, inventoryPromptVersion, pricingPromptVersion } = config;
 
-  return async (agent: DecisionAgent, context: SimState, event: SimEvent): Promise<Decision> => {
+  const resolveFallback = (
+    agent: DecisionAgent,
+    skuId: string,
+    context: SimState,
+    rawOutput: string,
+    latencyMs: number
+  ): ResolvedDecision => ({
+    decision: safeDefault(agent, skuId, context),
+    raw_output: rawOutput,
+    source: 'llm',
+    valid: false,
+    latency_ms: latencyMs,
+  });
+
+  return async (
+    agent: DecisionAgent,
+    context: SimState,
+    event: SimEvent
+  ): Promise<ResolvedDecision> => {
     return record(`agent.${agent}.resolve`, async () => {
+      const startedAt = performance.now();
       const skuId = extractSkuFromEvent(event);
       const promptVersion = agent === 'inventory' ? inventoryPromptVersion : pricingPromptVersion;
       const promptEntry = getPrompt(agent, promptVersion);
@@ -106,17 +117,19 @@ export function createLlmDecisionResolver(
           agent,
           prompt_version: promptVersion,
         });
-        return safeDefault(agent, skuId, context);
+        return resolveFallback(agent, skuId, context, '', 0);
       }
 
-      const schema = getSchemaForAgent(agent, catalogSkuIds, currentPrices);
+      const schema = getSchemaForAgent(agent, catalogSkuIds, context);
       const userMessage = buildUserMessage(agent, context, event);
       const messages: ChatMessage[] = [
         { role: 'system', content: promptEntry.system },
         { role: 'user', content: userMessage },
       ];
+      let lastRawOutput = '';
+      let lastError = 'unknown validation error';
 
-      const attemptParse = async (msgs: ChatMessage[]): Promise<Decision | null> => {
+      const attemptParse = async (msgs: ChatMessage[]): Promise<ResolvedDecision | null> => {
         try {
           const response = await client.chat({
             model: modelId,
@@ -127,14 +140,17 @@ export function createLlmDecisionResolver(
 
           const choice = response.choices[0];
           if (!choice) {
+            lastError = 'LLM returned empty choices';
             agentLogger.warn('LLM returned empty choices', { agent });
             return null;
           }
 
-          const raw = parseContent(choice.message.content);
+          lastRawOutput = choice.message.content;
+          const raw = parseContent(lastRawOutput);
           const result = schema.safeParse(raw);
 
           if (!result.success) {
+            lastError = JSON.stringify(result.error.issues);
             agentLogger.warn('LLM response validation failed', {
               agent,
               errors: result.error.issues,
@@ -142,11 +158,19 @@ export function createLlmDecisionResolver(
             return null;
           }
 
-          return parsedToDecision(agent, result.data as Record<string, unknown>);
+          const decision = parsedToDecision(agent, result.data as Record<string, unknown>);
+          return {
+            decision,
+            raw_output: lastRawOutput,
+            source: 'llm',
+            valid: true,
+            latency_ms: Math.round(performance.now() - startedAt),
+          };
         } catch (error) {
+          lastError = error instanceof Error ? error.message : String(error);
           agentLogger.error('LLM call failed', {
             agent,
-            error: error instanceof Error ? error.message : String(error),
+            error: lastError,
           });
           return null;
         }
@@ -159,8 +183,7 @@ export function createLlmDecisionResolver(
         ...messages,
         {
           role: 'user',
-          content:
-            'Your previous response was invalid. Please respond with ONLY a valid JSON object in the exact shape specified in the system prompt. No markdown, no extra text.',
+          content: `Your previous response was invalid: ${lastError}. Please respond with ONLY a valid JSON object in the exact shape specified in the system prompt. No markdown, no extra text.`,
         },
       ];
 
@@ -168,7 +191,13 @@ export function createLlmDecisionResolver(
       if (retryAttempt) return retryAttempt;
 
       agentLogger.warn('LLM failed after retry, using safe default', { agent, sku_id: skuId });
-      return safeDefault(agent, skuId, context);
-    }) as Promise<Decision>;
+      return resolveFallback(
+        agent,
+        skuId,
+        context,
+        lastRawOutput,
+        Math.round(performance.now() - startedAt)
+      );
+    }) as Promise<ResolvedDecision>;
   };
 }

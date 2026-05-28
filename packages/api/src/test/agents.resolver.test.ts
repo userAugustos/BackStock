@@ -5,11 +5,6 @@ import { createLlmDecisionResolver } from '@api/modules/agents/agents.resolver';
 import type { SimEvent, SimState } from '@api/modules/simulation/simulation.types';
 
 const CATALOG_SKU_IDS = ['milk-2pct-gal', 'produce-lettuce'];
-const CURRENT_PRICES: Record<string, number> = {
-  'milk-2pct-gal': 3.99,
-  'produce-lettuce': 1.99,
-};
-
 const baseState: SimState = {
   skus: {
     'milk-2pct-gal': {
@@ -81,17 +76,20 @@ describe('createLlmDecisionResolver', () => {
     const resolver = createLlmDecisionResolver({
       client: fake.client,
       catalogSkuIds: CATALOG_SKU_IDS,
-      currentPrices: CURRENT_PRICES,
       modelId: 'test-model',
       inventoryPromptVersion: 'inv-v1',
       pricingPromptVersion: 'price-v1',
     });
 
-    const decision = await resolver('inventory', baseState, inventoryEvent);
+    const resolved = await resolver('inventory', baseState, inventoryEvent);
+    const { decision } = resolved;
     expect(decision.agent).toBe('inventory');
     if (decision.agent !== 'inventory') throw new Error('wrong agent');
     expect(decision.order_cases).toBe(24);
     expect(decision.sku_id).toBe('milk-2pct-gal');
+    expect(resolved.raw_output).toContain('order_cases');
+    expect(resolved.valid).toBe(true);
+    expect(resolved.source).toBe('llm');
   });
 
   test('pricing: valid LLM response produces correct decision', async () => {
@@ -105,17 +103,44 @@ describe('createLlmDecisionResolver', () => {
     const resolver = createLlmDecisionResolver({
       client: fake.client,
       catalogSkuIds: CATALOG_SKU_IDS,
-      currentPrices: CURRENT_PRICES,
       modelId: 'test-model',
       inventoryPromptVersion: 'inv-v1',
       pricingPromptVersion: 'price-v1',
     });
 
-    const decision = await resolver('pricing', baseState, pricingEvent);
+    const resolved = await resolver('pricing', baseState, pricingEvent);
+    const { decision } = resolved;
     expect(decision.agent).toBe('pricing');
     if (decision.agent !== 'pricing') throw new Error('wrong agent');
     expect(decision.new_price).toBe(4.29);
     expect(decision.sku_id).toBe('milk-2pct-gal');
+    expect(resolved.valid).toBe(true);
+  });
+
+  test('pricing validation uses current context price', async () => {
+    const context = structuredClone(baseState);
+    context.skus['milk-2pct-gal']!.price = 10;
+    const fake = createFakeLlmClient({
+      response: JSON.stringify({
+        new_price: 40,
+        sku: 'milk-2pct-gal',
+        summary: 'Raising price from current context price',
+      }),
+    });
+    const resolver = createLlmDecisionResolver({
+      client: fake.client,
+      catalogSkuIds: CATALOG_SKU_IDS,
+      modelId: 'test-model',
+      inventoryPromptVersion: 'inv-v1',
+      pricingPromptVersion: 'price-v1',
+    });
+
+    const resolved = await resolver('pricing', context, pricingEvent);
+    const { decision } = resolved;
+    expect(decision.agent).toBe('pricing');
+    if (decision.agent !== 'pricing') throw new Error('wrong agent');
+    expect(decision.new_price).toBe(40);
+    expect(resolved.valid).toBe(true);
   });
 
   test('retries once on parse failure, succeeds on second try', async () => {
@@ -136,16 +161,17 @@ describe('createLlmDecisionResolver', () => {
     const resolver = createLlmDecisionResolver({
       client: fake.client,
       catalogSkuIds: CATALOG_SKU_IDS,
-      currentPrices: CURRENT_PRICES,
       modelId: 'test-model',
       inventoryPromptVersion: 'inv-v1',
       pricingPromptVersion: 'price-v1',
     });
 
-    const decision = await resolver('inventory', baseState, inventoryEvent);
+    const resolved = await resolver('inventory', baseState, inventoryEvent);
+    const { decision } = resolved;
     expect(decision.agent).toBe('inventory');
     if (decision.agent !== 'inventory') throw new Error('wrong agent');
     expect(decision.order_cases).toBe(12);
+    expect(resolved.valid).toBe(true);
     expect(fake.calls).toHaveLength(2);
   });
 
@@ -156,17 +182,19 @@ describe('createLlmDecisionResolver', () => {
     const resolver = createLlmDecisionResolver({
       client: fake.client,
       catalogSkuIds: CATALOG_SKU_IDS,
-      currentPrices: CURRENT_PRICES,
       modelId: 'test-model',
       inventoryPromptVersion: 'inv-v1',
       pricingPromptVersion: 'price-v1',
     });
 
-    const decision = await resolver('inventory', baseState, inventoryEvent);
+    const resolved = await resolver('inventory', baseState, inventoryEvent);
+    const { decision } = resolved;
     expect(decision.agent).toBe('inventory');
     if (decision.agent !== 'inventory') throw new Error('wrong agent');
     expect(decision.order_cases).toBe(0);
     expect(decision.summary).toContain('Fallback');
+    expect(resolved.valid).toBe(false);
+    expect(resolved.raw_output).toBe('totally invalid json !!@@##');
     expect(fake.calls).toHaveLength(2);
   });
 
@@ -178,17 +206,18 @@ describe('createLlmDecisionResolver', () => {
     const resolver = createLlmDecisionResolver({
       client: fake.client,
       catalogSkuIds: CATALOG_SKU_IDS,
-      currentPrices: CURRENT_PRICES,
       modelId: 'test-model',
       inventoryPromptVersion: 'inv-v1',
       pricingPromptVersion: 'price-v1',
     });
 
-    const decision = await resolver('inventory', baseState, inventoryEvent);
+    const resolved = await resolver('inventory', baseState, inventoryEvent);
+    const { decision } = resolved;
     expect(decision.agent).toBe('inventory');
     if (decision.agent !== 'inventory') throw new Error('wrong agent');
     expect(decision.order_cases).toBe(0);
     expect(decision.summary).toContain('Fallback');
+    expect(resolved.valid).toBe(false);
   });
 
   test('falls back when LLM returns empty choices', async () => {
@@ -197,16 +226,17 @@ describe('createLlmDecisionResolver', () => {
     const resolver = createLlmDecisionResolver({
       client: fake.client,
       catalogSkuIds: CATALOG_SKU_IDS,
-      currentPrices: CURRENT_PRICES,
       modelId: 'test-model',
       inventoryPromptVersion: 'inv-v1',
       pricingPromptVersion: 'price-v1',
     });
 
-    const decision = await resolver('inventory', baseState, inventoryEvent);
+    const resolved = await resolver('inventory', baseState, inventoryEvent);
+    const { decision } = resolved;
     expect(decision.agent).toBe('inventory');
     if (decision.agent !== 'inventory') throw new Error('wrong agent');
     expect(decision.order_cases).toBe(0);
+    expect(resolved.valid).toBe(false);
   });
 
   test('sends system prompt + user context in messages', async () => {
@@ -220,7 +250,6 @@ describe('createLlmDecisionResolver', () => {
     const resolver = createLlmDecisionResolver({
       client: fake.client,
       catalogSkuIds: CATALOG_SKU_IDS,
-      currentPrices: CURRENT_PRICES,
       modelId: 'test-model',
       inventoryPromptVersion: 'inv-v1',
       pricingPromptVersion: 'price-v1',

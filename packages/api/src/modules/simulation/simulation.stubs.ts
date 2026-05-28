@@ -2,6 +2,7 @@ import type {
   Decision,
   DecisionAgent,
   DecisionResolver,
+  ResolvedDecision,
   SimEvent,
   SimState,
 } from './simulation.types';
@@ -15,23 +16,32 @@ export const stubDecisionResolver: DecisionResolver = (
   agent: DecisionAgent,
   context: SimState,
   event: SimEvent
-): Decision => {
+): ResolvedDecision => {
   const skuId = extractSkuFromEvent(event);
   const sku = context.skus[skuId]!;
+  let decision: Decision;
 
   if (agent === 'inventory') {
-    return {
+    decision = {
       agent: 'inventory',
       sku_id: skuId,
       order_cases: 1,
       summary: 'Stub: order 1 case (minimum)',
     };
+  } else {
+    decision = {
+      agent: 'pricing',
+      sku_id: skuId,
+      new_price: sku.price,
+      summary: 'Stub: keep current price',
+    };
   }
 
   return {
-    agent: 'pricing',
-    sku_id: skuId,
-    new_price: sku.price,
-    summary: 'Stub: keep current price',
+    decision,
+    raw_output: JSON.stringify(decision),
+    source: 'stub',
+    valid: true,
+    latency_ms: 0,
   };
 };
