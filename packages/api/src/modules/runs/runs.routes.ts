@@ -1,6 +1,9 @@
 import { Elysia } from 'elysia';
 
+import { BranchRunBodySchema } from '@api/modules/simulation/simulation.schemas';
+
 import {
+  BranchRunEnvelopeSchema,
   DayRunParamsSchema,
   RunDecisionEnvelopeSchema,
   RunDecisionParamsSchema,
@@ -11,7 +14,14 @@ import {
   StartRunBodySchema,
   StartRunEnvelopeSchema,
 } from './runs.schemas';
-import { getRun, getRunDecision, getRunImpact, getRunTimeline, startRun } from './runs.service';
+import {
+  branchRun,
+  getRun,
+  getRunDecision,
+  getRunImpact,
+  getRunTimeline,
+  startRun,
+} from './runs.service';
 
 export const runsRoutes = new Elysia({ name: 'routes.runs' })
   .post(
@@ -96,6 +106,25 @@ export const runsRoutes = new Elysia({ name: 'routes.runs' })
         summary: 'Get Run Decision',
         description:
           'Returns the agent decision, context snapshot, model metadata, and parsed output for one event.',
+        tags: ['runs'],
+      },
+    }
+  )
+  .post(
+    '/runs/:id/branch',
+    async ({ params, body, set }) => {
+      set.status = 201;
+      const data = await branchRun(params.id, body.at_event_seq, body.change);
+      return { data };
+    },
+    {
+      params: RunParamsSchema,
+      body: BranchRunBodySchema,
+      response: { 201: BranchRunEnvelopeSchema },
+      detail: {
+        summary: 'Branch Run',
+        description:
+          'Forks a completed parent run at an event seq, replaying pre-fork decisions and applying the fork change (decision override or version swap).',
         tags: ['runs'],
       },
     }

@@ -67,10 +67,17 @@ export const RunDecisionSchema = z.object({
   failure_reason: z.string().nullable(),
 });
 
+export const BranchedRunSchema = RunStartSchema.extend({
+  parent_run_id: z.string(),
+  fork_event_seq: z.number().int().nonnegative(),
+  fork_change: JsonObjectSchema,
+});
+
 export const StartRunEnvelopeSchema = z.object({ data: RunStartSchema });
 export const RunDetailEnvelopeSchema = z.object({ data: RunDetailSchema });
 export const RunTimelineEnvelopeSchema = z.object({ data: z.array(RunTimelineItemSchema) });
 export const RunImpactEnvelopeSchema = z.object({ data: RunImpactSchema });
 export const RunDecisionEnvelopeSchema = z.object({ data: RunDecisionSchema });
+export const BranchRunEnvelopeSchema = z.object({ data: BranchedRunSchema });
 
 export { StartRunBodySchema };

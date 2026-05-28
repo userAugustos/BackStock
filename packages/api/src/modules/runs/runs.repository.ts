@@ -147,6 +147,14 @@ export async function countDecisionsByRunId(
   return { total, failed };
 }
 
+/**
+ * Returns all decisions for a run ordered by event seq. Used by the run worker when
+ * building a forking resolver to replay parent-run decisions before the fork point.
+ */
+export function findDecisionsByRunId(runId: string) {
+  return db.select().from(decisions).where(eq(decisions.runId, runId)).orderBy(decisions.eventSeq);
+}
+
 interface InsertImpactData {
   runId: string;
   impact: SimImpact;

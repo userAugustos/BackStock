@@ -1,7 +1,8 @@
-import { findDayById } from '@api/modules/days/days.repository';
+import { findDayById, findEventsByDayId } from '@api/modules/days/days.repository';
 import { publish } from '@api/modules/queue/publisher';
 import { RUN_REQUESTED_ROUTING_KEY, RUNS_EXCHANGE } from '@api/modules/queue/topology';
 import { findVersionById } from '@api/modules/versions/versions.repository';
+import type { ForkChange } from '@api/modules/simulation/simulation.types';
 import { badRequest, internalError, notFound } from '@core/errors';
 import { logger } from '@core/logger';
 
@@ -137,5 +138,72 @@ export async function getRunDecision(runId: string, eventSeq: number) {
     valid: Boolean(decision.valid),
     latency_ms: decision.latencyMs,
     failure_reason: decision.failureReason,
+  };
+}
+
+export async function branchRun(parentRunId: string, atEventSeq: number, change: ForkChange) {
+  const parentRun = await findRunById(parentRunId);
+  if (!parentRun) throw notFound('run_not_found', `Run '${parentRunId}' not found`);
+  if (parentRun.status !== 'done')
+    throw badRequest('run_not_complete', 'Can only branch a completed run');
+
+  const events = await findEventsByDayId(parentRun.dayId);
+  const maxSeq = events.length > 0 ? Math.max(...events.map((e) => e.seq)) : 0;
+  if (atEventSeq > maxSeq)
+    throw badRequest(
+      'invalid_fork_seq',
+      `at_event_seq ${atEventSeq} exceeds max event seq ${maxSeq}`
+    );
+
+  if (change.type === 'decision_override') {
+    const parentDecision = await findDecisionByRunAndSeq(parentRunId, atEventSeq);
+    if (!parentDecision)
+      throw badRequest(
+        'no_decision_at_seq',
+        `No decision exists at event seq ${atEventSeq} in the parent run`
+      );
+  }
+
+  let versionId = parentRun.versionId;
+  if (change.type === 'version') {
+    const version = await findVersionById(change.version_id);
+    if (!version) throw notFound('version_not_found', `Version '${change.version_id}' not found`);
+    versionId = change.version_id;
+  }
+
+  const row = await insertRun({
+    dayId: parentRun.dayId,
+    versionId,
+    parentRunId,
+    forkEventSeq: atEventSeq,
+    forkChange: change as unknown as Record<string, unknown>,
+  });
+
+  try {
+    const publishPromise = publish({
+      exchange: 'runs',
+      routingKey: 'run.requested',
+      payload: { run_id: row.id },
+    });
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('publish timeout')), 2000)
+    );
+    await Promise.race([publishPromise, timeout]);
+  } catch (err) {
+    logger.warn('Failed to publish run.requested for branch, run created but not queued', {
+      run_id: row.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  return {
+    id: row.id,
+    day_id: row.dayId,
+    version_id: row.versionId,
+    parent_run_id: row.parentRunId,
+    fork_event_seq: row.forkEventSeq,
+    fork_change: row.forkChange ? JSON.parse(row.forkChange) : null,
+    status: row.status,
+    created_at: row.createdAt,
   };
 }

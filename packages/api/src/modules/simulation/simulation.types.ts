@@ -138,6 +138,18 @@ export type DecisionResolver = (
   event: SimEvent
 ) => ResolvedDecision | Promise<ResolvedDecision>;
 
+export interface DecisionOverrideChange {
+  type: 'decision_override';
+  decision: Decision;
+}
+
+export interface VersionChange {
+  type: 'version';
+  version_id: string;
+}
+
+export type ForkChange = DecisionOverrideChange | VersionChange;
+
 export interface DecisionRecord {
   event_seq: number;
   decision: Decision;
