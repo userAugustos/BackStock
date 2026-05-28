@@ -11,6 +11,18 @@ export const backStockPublicApi = edenTreaty<BackStockApiType>(API_URL);
 
 export const backStockApi = backStockPublicApi;
 
+/**
+ * Eden's classic treaty models dynamic path segments as an index signature, so
+ * `backStockApi.days[id]` is typed `Node | undefined` under noUncheckedIndexedAccess.
+ * At runtime the treaty proxy always returns the node, so these accessors narrow
+ * away the spurious `undefined` for path-param routes.
+ */
+type DayNode = NonNullable<(typeof backStockApi.days)[string]>;
+type RunNode = NonNullable<(typeof backStockApi.runs)[string]>;
+
+export const dayApi = (dayId: string): DayNode => backStockApi.days[dayId] as DayNode;
+export const runApi = (runId: string): RunNode => backStockApi.runs[runId] as RunNode;
+
 interface ErrorPayload {
   value: {
     error: string;
@@ -35,8 +47,20 @@ export class ApiResponseError extends Error {
 
 type EdenResponse<T> = Promise<{ data: T; error: null } | { data: null; error: any }>;
 
+function throwOnError(result: { error: unknown }): void {
+  if (!result.error) return;
+  const error = result.error as ErrorPayload & { status?: number };
+  const status = error.status;
+  const payload = error.value ?? ({} as Partial<ErrorPayload['value']>);
+  let message = 'Something went wrong';
+  if (payload.message) message = payload.message;
+  if (payload.details?.[0]?.message) message = payload.details[0].message;
+  throw new ApiResponseError(message, payload.request_id, status, payload.error);
+}
+
 /**
- * Generic API call wrapper. Extracts errors, optionally parses with Zod.
+ * Generic API call wrapper for endpoints whose HTTP body IS the payload
+ * (e.g. `/healthz`). Extracts errors, optionally parses with Zod.
  *
  * @example
  * const data = await apiCall<MyType>(() => backStockApi.healthz.get());
@@ -46,15 +70,25 @@ export async function apiCall<T>(
   schema?: z.ZodType
 ): Promise<T> {
   const result = await request();
-  if (result.error) {
-    const status = result.error.status as number | undefined;
-    const error = result.error as ErrorPayload;
-    const payload = error.value ?? ({} as Partial<ErrorPayload['value']>);
-    let message = 'Something went wrong';
-    if (payload.message) message = payload.message;
-    if (payload.details?.[0]?.message) message = payload.details[0].message;
-    throw new ApiResponseError(message, payload.request_id, status, payload.error);
-  }
+  throwOnError(result);
   if (schema) return schema.parse(result.data) as T;
   return result.data as T;
+}
+
+/**
+ * Wrapper for domain endpoints that return the `{ data: ... }` envelope.
+ * Unwraps the inner `data` so callers receive the typed payload directly.
+ *
+ * @example
+ * const days = await apiData<DayListItem[]>(() => backStockApi.days.get());
+ */
+export async function apiData<T>(
+  request: () => EdenResponse<{ data: T }>,
+  schema?: z.ZodType
+): Promise<T> {
+  const result = await request();
+  throwOnError(result);
+  const payload = (result.data as { data: T }).data;
+  if (schema) return schema.parse(payload) as T;
+  return payload;
 }
