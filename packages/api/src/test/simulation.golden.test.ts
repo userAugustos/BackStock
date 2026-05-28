@@ -139,4 +139,45 @@ describe('simulation determinism', () => {
     );
     expect(advancedOrders.length).toBeGreaterThanOrEqual(1);
   });
+
+  test('approved in-transit orders deliver inventory when vendor delivery time arrives', () => {
+    const initial = buildInitialState({
+      skus: [
+        {
+          id: 'milk-2pct-gal',
+          on_hand: 6,
+          price: 3.99,
+          unit_cost: 2.8,
+          shelf_life_hours: 96,
+          case_size: 6,
+        },
+      ],
+      vendors: [{ id: 'dairy-co', lead_time_hours: 1, next_delivery_at: '10:00' }],
+    });
+    const result = simulate(
+      initial,
+      [
+        {
+          seq: 0,
+          at: '08:00',
+          type: 'sales_spike',
+          payload: { sku: 'milk-2pct-gal', multiplier: 20 },
+        },
+        {
+          seq: 1,
+          at: '09:00',
+          type: 'manager_override',
+          payload: { target: 'reorder', action: 'approve' },
+        },
+        { seq: 2, at: '11:00', type: 'damage_report', payload: { sku: 'milk-2pct-gal', units: 0 } },
+      ],
+      stubDecisionResolver
+    );
+
+    const final = result.steps[result.steps.length - 1]!;
+    expect(final.state_snapshot.skus['milk-2pct-gal']!.units_delivered).toBe(6);
+    expect(final.state_snapshot.skus['milk-2pct-gal']!.on_hand).toBe(6);
+    expect(final.order_state[0]!.status).toBe('delivered');
+    expect(result.impact.ending_inventory_value).toBe(16.8);
+  });
 });

@@ -23,6 +23,11 @@ export async function executeRun(runId: string): Promise<void> {
     const run = await findRunById(runId);
     if (!run) throw new Error(`Run '${runId}' not found`);
 
+    if (run.status !== 'queued') {
+      workerLogger.info('Skipping run execution', { run_id: runId, status: run.status });
+      return;
+    }
+
     await updateRunStatus(runId, 'running');
 
     try {

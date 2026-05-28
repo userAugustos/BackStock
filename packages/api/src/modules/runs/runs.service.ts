@@ -1,7 +1,8 @@
 import { findDayById } from '@api/modules/days/days.repository';
 import { publish } from '@api/modules/queue/publisher';
+import { RUN_REQUESTED_ROUTING_KEY, RUNS_EXCHANGE } from '@api/modules/queue/topology';
 import { findVersionById } from '@api/modules/versions/versions.repository';
-import { badRequest, notFound } from '@core/errors';
+import { badRequest, internalError, notFound } from '@core/errors';
 import { logger } from '@core/logger';
 
 import {
@@ -10,6 +11,7 @@ import {
   findRunById,
   findRunStepsByRunId,
   insertRun,
+  updateRunStatus,
 } from './runs.repository';
 
 export async function startRun(dayId: string, versionId: string) {
@@ -23,8 +25,8 @@ export async function startRun(dayId: string, versionId: string) {
 
   try {
     const publishPromise = publish({
-      exchange: 'runs',
-      routingKey: 'run.requested',
+      exchange: RUNS_EXCHANGE,
+      routingKey: RUN_REQUESTED_ROUTING_KEY,
       payload: { run_id: row.id },
     });
     const timeout = new Promise<never>((_, reject) =>
@@ -32,10 +34,12 @@ export async function startRun(dayId: string, versionId: string) {
     );
     await Promise.race([publishPromise, timeout]);
   } catch (err) {
-    logger.warn('Failed to publish run.requested, run created but not queued', {
+    await updateRunStatus(row.id, 'failed');
+    logger.error('Failed to publish run.requested', {
       run_id: row.id,
       error: err instanceof Error ? err.message : String(err),
     });
+    throw internalError('run_enqueue_failed', `Run '${row.id}' could not be queued`);
   }
 
   return {

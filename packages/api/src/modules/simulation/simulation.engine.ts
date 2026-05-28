@@ -17,6 +17,8 @@ import type {
   VendorDelayPayload,
 } from './simulation.types';
 
+const END_OF_DAY_TIME = '22:00';
+
 function roundMoney(x: number): number {
   return Math.round(x * 100) / 100;
 }
@@ -165,6 +167,27 @@ function applyVendorDelay(state: SimState, event: SimEvent): void {
   }
 }
 
+function applyDeliveriesDueBy(state: SimState, targetTime: string): void {
+  const targetHour = parseTime(targetTime);
+
+  for (let i = 0; i < state.orders.length; i++) {
+    const order = state.orders[i]!;
+    if (order.status !== 'in_transit' || !order.shipped_at) continue;
+
+    const vendor = state.vendors[order.vendor_id];
+    const sku = state.skus[order.sku_id];
+    if (!vendor || !sku) continue;
+
+    const shippedHour = parseTime(order.shipped_at);
+    const deliveryHour = parseTime(vendor.next_delivery_at);
+    if (shippedHour > deliveryHour || deliveryHour > targetHour) continue;
+
+    state.orders[i] = advanceOrder(order, { type: 'deliver' });
+    sku.on_hand += order.quantity;
+    sku.units_delivered += order.quantity;
+  }
+}
+
 function applyDamageReport(state: SimState, event: SimEvent): void {
   const payload = event.payload as DamageReportPayload;
   const sku = state.skus[payload.sku];
@@ -209,7 +232,7 @@ function applyManagerOverride(state: SimState, event: SimEvent): void {
 
     if (payload.action === 'approve') {
       const placed = advanceOrder(target, { type: 'approve' });
-      const shipped = advanceOrder(placed, { type: 'ship' });
+      const shipped = { ...advanceOrder(placed, { type: 'ship' }), shipped_at: event.at };
       state.orders[targetIdx] = shipped;
     } else if (payload.action === 'reject') {
       state.orders[targetIdx] = advanceOrder(target, { type: 'reject' });
@@ -221,7 +244,7 @@ function applyManagerOverride(state: SimState, event: SimEvent): void {
       };
       const qty = modPayload.quantity ?? target.quantity;
       const placed = advanceOrder(target, { type: 'modify', quantity: qty });
-      const shipped = advanceOrder(placed, { type: 'ship' });
+      const shipped = { ...advanceOrder(placed, { type: 'ship' }), shipped_at: event.at };
       state.orders[targetIdx] = shipped;
     }
   }
@@ -295,6 +318,8 @@ export function simulate(
     const event = sorted[i]!;
     state.current_time = event.at;
 
+    applyDeliveriesDueBy(state, event.at);
+
     switch (event.type) {
       case 'sales_spike':
         applySalesSpike(state, event, ctx);
@@ -322,6 +347,11 @@ export function simulate(
       order_state: structuredClone(state.orders),
     });
   }
+
+  applyDeliveriesDueBy(state, END_OF_DAY_TIME);
+  const lastStep = steps[steps.length - 1]!;
+  lastStep.state_snapshot = structuredClone(state);
+  lastStep.order_state = structuredClone(state.orders);
 
   const impact = computeImpact(ctx.initialState, state);
 
