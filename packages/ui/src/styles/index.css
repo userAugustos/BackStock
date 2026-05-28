@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Scan the shared UI package so utility classes used only inside @repo/ui
+   components (e.g. Dialog's fixed/left-1/2/translate positioning) are emitted
+   even when no consuming app file references them directly. */
+@source '../**/*.{ts,tsx}';
+
 @import '@fontsource-variable/bricolage-grotesque';
 @import '@fontsource-variable/geist';
 @import '@fontsource-variable/jetbrains-mono';
