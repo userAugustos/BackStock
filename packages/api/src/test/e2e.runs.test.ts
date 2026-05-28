@@ -127,6 +127,12 @@ describe('runs', () => {
     expect(doneBody.data.status).toBe('done');
     expect(doneBody.data.completed_at).toBeTruthy();
 
+    await executeRun(runId);
+    const redeliveredRes = await fetch(`${RUNS_BASE()}/${runId}`);
+    expect(redeliveredRes.status).toBe(200);
+    const redeliveredBody = (await redeliveredRes.json()) as any;
+    expect(redeliveredBody.data.status).toBe('done');
+
     const timelineRes = await fetch(`${RUNS_BASE()}/${runId}/timeline`);
     expect(timelineRes.status).toBe(200);
     const timelineBody = (await timelineRes.json()) as any;

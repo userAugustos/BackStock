@@ -47,6 +47,7 @@ export interface OrderState {
   quantity: number;
   status: OrderStatus;
   created_at_seq: number;
+  shipped_at?: string;
 }
 
 export type OrderFSMEvent =
