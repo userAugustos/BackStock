@@ -18,6 +18,10 @@ import {
 
 const workerLogger = logger.child({ domain: LOG_DOMAINS.SIM });
 
+/**
+ * Executes a queued run exactly once. Redelivered queue messages for completed,
+ * failed, or already-running runs are treated as no-ops to preserve persisted results.
+ */
 export async function executeRun(runId: string): Promise<void> {
   return record('run.execute', async () => {
     const run = await findRunById(runId);

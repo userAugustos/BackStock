@@ -167,6 +167,11 @@ function applyVendorDelay(state: SimState, event: SimEvent): void {
   }
 }
 
+/**
+ * Applies vendor deliveries before the next event snapshot is recorded.
+ * Orders only deliver after they have shipped and once the vendor delivery time
+ * is reached; delivered quantities affect inventory and impact metrics.
+ */
 function applyDeliveriesDueBy(state: SimState, targetTime: string): void {
   const targetHour = parseTime(targetTime);
 
@@ -291,6 +296,11 @@ function computeImpact(initialState: SimState, finalState: SimState): Impact {
   };
 }
 
+/**
+ * Runs the deterministic day simulation from an initial state and normalized events.
+ * Event order is sequence-based, and any end-of-day deliveries are applied before
+ * impact is computed so timeline and metrics describe the same final state.
+ */
 export function simulate(
   initialState: SimState,
   events: SimEvent[],

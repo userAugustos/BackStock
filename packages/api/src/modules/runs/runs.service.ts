@@ -14,6 +14,11 @@ import {
   updateRunStatus,
 } from './runs.repository';
 
+/**
+ * Creates a run and guarantees it was handed to RabbitMQ before returning 201.
+ * If enqueueing fails, the persisted row is marked failed so clients do not see
+ * a permanently queued run that no worker can process.
+ */
 export async function startRun(dayId: string, versionId: string) {
   const day = await findDayById(dayId);
   if (!day) throw notFound('day_not_found', `Day '${dayId}' not found`);
