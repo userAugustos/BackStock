@@ -141,6 +141,15 @@ export async function getRunDecision(runId: string, eventSeq: number) {
   };
 }
 
+/**
+ * Forks a completed parent run at an event seq and queues the branch for execution.
+ * Two fork modes are supported via `change`:
+ *   - `decision_override` — replace the agent decision at `atEventSeq` and recompute downstream
+ *   - `version` — rerun the whole day under a different agent Version (fork at seq 0)
+ * The new run is persisted with `parent_run_id` + `fork_event_seq` + `fork_change`;
+ * the worker uses the parent's recorded decisions to replay pre-fork steps and the
+ * configured base resolver for at/after-fork steps.
+ */
 export async function branchRun(parentRunId: string, atEventSeq: number, change: ForkChange) {
   const parentRun = await findRunById(parentRunId);
   if (!parentRun) throw notFound('run_not_found', `Run '${parentRunId}' not found`);

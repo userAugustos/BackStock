@@ -14,6 +14,14 @@ interface ForkContext {
   baseResolver: DecisionResolver;
 }
 
+/**
+ * Wraps a base resolver with the fork rule, applied per event seq:
+ *   - before the fork → reuse the parent run's recorded decision (source: 'reused', no LLM call)
+ *   - at the fork, when `forkChange.type === 'decision_override'` → return the override (source: 'override')
+ *   - at the fork (version) or after the fork → delegate to the base resolver (LLM or stub)
+ * Pre-fork reuse is what makes a counterfactual branch deterministic up to the fork
+ * point; a version fork (fork at seq 0) reuses nothing and recomputes the whole day.
+ */
 export function createForkingResolver(ctx: ForkContext): DecisionResolver {
   const { parentDecisions, forkEventSeq, forkChange, baseResolver } = ctx;
 

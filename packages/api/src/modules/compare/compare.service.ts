@@ -15,8 +15,8 @@ export interface CompareRunMeta {
 }
 
 export interface CompareStepEntry {
-  state_snapshot: unknown;
-  order_state: unknown;
+  state_snapshot: Record<string, unknown>;
+  order_state: Record<string, unknown>[];
 }
 
 export interface CompareDecisionEntry {
@@ -68,6 +68,15 @@ function computeDelta(a: ImpactValues, b: ImpactValues): ImpactValues {
   };
 }
 
+/**
+ * Aligns the timelines of 2 or 3 runs of the same day onto a single seq-indexed view
+ * and computes pairwise impact deltas. Alignment is by step `seq`: each entry exposes
+ * each run's step snapshot at that seq (when present) and the decision recorded against
+ * the preceding event (`event_seq = seq - 1`), so divergent branches sit side by side
+ * without renumbering. `divergence_seq` is the smallest non-null `fork_event_seq` across
+ * the compared runs — the earliest point any branch left the parent's path; when all
+ * runs are root runs it falls back to 0, meaning the entire timeline is shared.
+ */
 export async function compareRuns(runIds: string[]): Promise<CompareResult> {
   if (runIds.length < 2 || runIds.length > 3)
     throw badRequest('invalid_run_count', 'Compare requires 2 or 3 run IDs');
@@ -136,8 +145,8 @@ export async function compareRuns(runIds: string[]): Promise<CompareResult> {
       const step = stepMap.get(seq);
       if (step) {
         steps[run.id] = {
-          state_snapshot: JSON.parse(step.stateSnapshot),
-          order_state: JSON.parse(step.orderState),
+          state_snapshot: JSON.parse(step.stateSnapshot) as Record<string, unknown>,
+          order_state: JSON.parse(step.orderState) as Record<string, unknown>[],
         };
       }
 
