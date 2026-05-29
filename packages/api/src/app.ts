@@ -7,6 +7,9 @@ import { Elysia } from 'elysia';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import { db } from '@api/db/client';
+import { daysRoutes } from '@api/modules/days/days.routes';
+import { seedHeroDay } from '@api/modules/days/days.seed';
+import { versionsRoutes } from '@api/modules/versions/versions.routes';
 import { config } from '@core/env';
 import { errorPlugin } from '@core/errors';
 import { LOG_DOMAINS, logger } from '@core/logger';
@@ -70,13 +73,13 @@ export const createApp = () =>
       { detail: { summary: 'Health Check', tags: ['system'] } }
     );
 
-export const backStockApi = createApp();
-// Feature modules attach here as: .use(<feature>Routes)
+export const backStockApi = createApp().use(daysRoutes).use(versionsRoutes);
 
 export type BackStockApi = typeof backStockApi;
 
 export const setupApi = async () => {
   migrate(db, { migrationsFolder: './src/db/migrations' });
+  await seedHeroDay();
   httpLogger.info('Setup complete', { env: config.environment });
 };
 
