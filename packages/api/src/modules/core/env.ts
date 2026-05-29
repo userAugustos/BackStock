@@ -29,6 +29,8 @@ export const config = {
   llm: {
     url: env.MODAL_LLM_URL ?? '',
     token: env.MODAL_LLM_TOKEN ?? '',
+    proxyKey: env.MODAL_KEY ?? '',
+    proxySecret: env.MODAL_SECRET ?? '',
     modelId: env.LLM_MODEL_ID ?? 'qwen-default',
     timeoutMs: parseInteger(env.LLM_TIMEOUT_MS, 30_000),
   },

@@ -5,6 +5,8 @@ import type { LlmClient, LlmRequest, LlmResponse } from './agents.types';
 interface LlmClientConfig {
   url: string;
   token: string;
+  proxyKey: string;
+  proxySecret: string;
   timeoutMs: number;
 }
 
@@ -23,6 +25,10 @@ export function createLlmClient(cfg: LlmClientConfig): LlmClient {
           };
           if (cfg.token) {
             headers['Authorization'] = `Bearer ${cfg.token}`;
+          }
+          if (cfg.proxyKey && cfg.proxySecret) {
+            headers['Modal-Key'] = cfg.proxyKey;
+            headers['Modal-Secret'] = cfg.proxySecret;
           }
 
           const res = await fetch(endpoint, {
