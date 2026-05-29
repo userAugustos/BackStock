@@ -31,6 +31,8 @@ export const RunDetailSchema = RunStartSchema.extend({
   fork_change: JsonObjectSchema.nullable(),
   label: z.string().nullable(),
   completed_at: z.string().nullable(),
+  decisions_total: z.number().int().nonnegative(),
+  decisions_failed: z.number().int().nonnegative(),
 });
 
 export const RunTimelineItemSchema = z.object({
@@ -62,6 +64,7 @@ export const RunDecisionSchema = z.object({
   source: z.string(),
   valid: z.boolean(),
   latency_ms: z.number().int().nonnegative(),
+  failure_reason: z.string().nullable(),
 });
 
 export const StartRunEnvelopeSchema = z.object({ data: RunStartSchema });

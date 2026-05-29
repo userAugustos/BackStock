@@ -279,6 +279,54 @@ describe('LLM agent integration', () => {
     expect(differs).toBe(true);
   });
 
+  test('run with unregistered prompt versions completes done_degraded with failure decisions', async () => {
+    const dayId = await createDay(DECISION_SEED_STATE, DECISION_EVENTS);
+
+    const versionRes = await fetch(`${config.app.apiUrl}/versions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: `e2e-prompt-missing-${crypto.randomUUID()}`,
+        inventory_prompt_version: 'inv-v1-does-not-exist',
+        pricing_prompt_version: 'price-v1-does-not-exist',
+        model_id: 'qwen-2.5-7b',
+      }),
+    });
+    const versionBody = (await versionRes.json()) as any;
+    const versionId = versionBody.data.id;
+
+    const startRes = await fetch(`${DAYS_BASE()}/${dayId}/runs`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ version_id: versionId }),
+    });
+    expect(startRes.status).toBe(201);
+    const startBody = (await startRes.json()) as any;
+    const runId = startBody.data.id;
+
+    await executeRun(runId);
+
+    const doneRes = await fetch(`${RUNS_BASE()}/${runId}`);
+    const doneBody = (await doneRes.json()) as any;
+    expect(doneBody.data.status).toBe('done_degraded');
+    expect(doneBody.data.decisions_total).toBeGreaterThan(0);
+    expect(doneBody.data.decisions_failed).toBe(doneBody.data.decisions_total);
+
+    const decisionRes = await fetch(`${RUNS_BASE()}/${runId}/decisions/0`);
+    expect(decisionRes.status).toBe(200);
+    const decisionBody = (await decisionRes.json()) as any;
+    expect(decisionBody.data.source).toBe('failure');
+    expect(decisionBody.data.failure_reason).toBe('prompt_missing');
+    expect(decisionBody.data.parsed.summary).toBe('');
+
+    // done_degraded runs still expose timeline and impact endpoints
+    const timelineRes = await fetch(`${RUNS_BASE()}/${runId}/timeline`);
+    expect(timelineRes.status).toBe(200);
+
+    const impactRes = await fetch(`${RUNS_BASE()}/${runId}/impact`);
+    expect(impactRes.status).toBe(200);
+  });
+
   test('LLM run with same fake is deterministic', async () => {
     const dayId = await createDay(IMPACT_SEED_STATE, IMPACT_EVENTS);
     const versionId = await createLlmVersion();

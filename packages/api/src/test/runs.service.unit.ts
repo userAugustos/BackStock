@@ -18,6 +18,7 @@ void mock.module('@api/modules/days/days.repository', () => ({ findDayById }));
 void mock.module('@api/modules/versions/versions.repository', () => ({ findVersionById }));
 void mock.module('@api/modules/queue/publisher', () => ({ publish }));
 void mock.module('@api/modules/runs/runs.repository', () => ({
+  countDecisionsByRunId: mock(async () => ({ total: 0, failed: 0 })),
   findDecisionByRunAndSeq: mock(),
   findImpactByRunId: mock(),
   findRunById: mock(),

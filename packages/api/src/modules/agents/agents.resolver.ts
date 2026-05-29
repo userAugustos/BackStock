@@ -1,6 +1,7 @@
 import type {
   Decision,
   DecisionAgent,
+  FailureReason,
   ResolvedDecision,
   SimEvent,
   SimState,
@@ -8,7 +9,7 @@ import type {
 import { logger } from '@core/logger';
 import { record } from '@core/telemetry';
 
-import { safeDefault } from './agents.defaults';
+import { failure } from './agents.defaults';
 import { getPrompt } from './agents.prompts';
 import { inventoryResponseSchema, pricingResponseSchema } from './agents.schemas';
 import type { ChatMessage, LlmClient } from './agents.types';
@@ -89,9 +90,11 @@ function parsedToDecision(agent: DecisionAgent, parsed: Record<string, unknown>)
 /**
  * Builds the decision resolver the simulation calls at each decision point: prompt the
  * model, parse and validate against the day's catalog and guardrails, retry once feeding
- * the validation error back, and if it still fails fall back to a safe default recorded as
- * `valid: false` — never crash, always visible. A missing prompt version short-circuits to
- * the same fallback.
+ * the validation error back. Any failure — missing prompt, LLM timeout, HTTP error, or
+ * invalid response after retry — short-circuits to a `source: 'failure'` ResolvedDecision
+ * with a structured `failure_reason`. The engine treats failure as "agent did not decide"
+ * (no phantom order, no phantom price change); the failure is recorded so the timeline and
+ * run-level counts surface it honestly instead of pretending a decision was made.
  */
 export function createLlmDecisionResolver(
   config: LlmResolverConfig
@@ -103,13 +106,15 @@ export function createLlmDecisionResolver(
     skuId: string,
     context: SimState,
     rawOutput: string,
-    latencyMs: number
+    latencyMs: number,
+    failureReason: FailureReason
   ): ResolvedDecision => ({
-    decision: safeDefault(agent, skuId, context),
+    decision: failure(agent, skuId, context),
     raw_output: rawOutput,
-    source: 'llm',
+    source: 'failure',
     valid: false,
     latency_ms: latencyMs,
+    failure_reason: failureReason,
   });
 
   return async (
@@ -124,11 +129,11 @@ export function createLlmDecisionResolver(
       const promptEntry = getPrompt(agent, promptVersion);
 
       if (!promptEntry) {
-        agentLogger.warn('Prompt version not found, using safe default', {
+        agentLogger.warn('Prompt version not found, falling back', {
           agent,
           prompt_version: promptVersion,
         });
-        return resolveFallback(agent, skuId, context, '', 0);
+        return resolveFallback(agent, skuId, context, '', 0, 'prompt_missing');
       }
 
       const schema = getSchemaForAgent(agent, catalogSkuIds, context);
@@ -139,6 +144,7 @@ export function createLlmDecisionResolver(
       ];
       let lastRawOutput = '';
       let lastError = 'unknown validation error';
+      let lastFailureReason: FailureReason = 'invalid_response';
 
       const attemptParse = async (msgs: ChatMessage[]): Promise<ResolvedDecision | null> => {
         try {
@@ -152,6 +158,7 @@ export function createLlmDecisionResolver(
           const choice = response.choices[0];
           if (!choice) {
             lastError = 'LLM returned empty choices';
+            lastFailureReason = 'invalid_response';
             agentLogger.warn('LLM returned empty choices', { agent });
             return null;
           }
@@ -162,6 +169,7 @@ export function createLlmDecisionResolver(
 
           if (!result.success) {
             lastError = JSON.stringify(result.error.issues);
+            lastFailureReason = 'invalid_response';
             agentLogger.warn('LLM response validation failed', {
               agent,
               errors: result.error.issues,
@@ -179,9 +187,17 @@ export function createLlmDecisionResolver(
           };
         } catch (error) {
           lastError = error instanceof Error ? error.message : String(error);
+          if (error instanceof Error && error.name === 'AbortError') {
+            lastFailureReason = 'llm_timeout';
+          } else if (error instanceof SyntaxError) {
+            lastFailureReason = 'invalid_response';
+          } else {
+            lastFailureReason = 'llm_http_error';
+          }
           agentLogger.error('LLM call failed', {
             agent,
             error: lastError,
+            failure_reason: lastFailureReason,
           });
           return null;
         }
@@ -201,13 +217,18 @@ export function createLlmDecisionResolver(
       const retryAttempt = await attemptParse(retryMessages);
       if (retryAttempt) return retryAttempt;
 
-      agentLogger.warn('LLM failed after retry, using safe default', { agent, sku_id: skuId });
+      agentLogger.warn('LLM failed after retry, falling back', {
+        agent,
+        sku_id: skuId,
+        failure_reason: lastFailureReason,
+      });
       return resolveFallback(
         agent,
         skuId,
         context,
         lastRawOutput,
-        Math.round(performance.now() - startedAt)
+        Math.round(performance.now() - startedAt),
+        lastFailureReason
       );
     }) as Promise<ResolvedDecision>;
   };

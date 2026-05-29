@@ -129,6 +129,7 @@ export async function executeRun(runId: string): Promise<void> {
           source: d.source,
           valid: d.valid,
           latencyMs: d.latency_ms,
+          failureReason: d.failure_reason ?? null,
         })),
         impact: result.impact,
         completedAt: new Date().toISOString(),

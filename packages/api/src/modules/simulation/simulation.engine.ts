@@ -125,7 +125,15 @@ async function applySalesEvent(
     });
 
     const { decision } = resolved;
-    if (decision.agent === 'inventory') {
+    // Only create an order when the agent actually decided to order something. Failure
+    // resolutions and explicit "don't order" decisions (order_cases === 0) must NOT push a
+    // phantom row into the FSM — it would later get approved/shipped/delivered for zero
+    // units, polluting the timeline.
+    if (
+      decision.agent === 'inventory' &&
+      resolved.source !== 'failure' &&
+      decision.order_cases > 0
+    ) {
       const orderQuantity = decision.order_cases * sku.case_size;
       const vendorId = Object.keys(state.vendors)[0] ?? 'unknown';
       const order = createOrder(skuId, vendorId, orderQuantity, event.seq);
@@ -228,7 +236,10 @@ async function applyInvoiceCostChange(
   });
 
   const { decision } = resolved;
-  if (decision.agent === 'pricing') {
+  // Failure resolutions carry a synthetic new_price (e.g. the current price); applying it
+  // would either be a no-op or, if the synthetic value is wrong, silently corrupt the SKU.
+  // The decision is still recorded above so the timeline shows the failure event honestly.
+  if (decision.agent === 'pricing' && resolved.source !== 'failure') {
     sku.price = decision.new_price;
   }
 }

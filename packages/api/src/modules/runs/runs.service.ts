@@ -6,6 +6,7 @@ import { badRequest, internalError, notFound } from '@core/errors';
 import { logger } from '@core/logger';
 
 import {
+  countDecisionsByRunId,
   findDecisionByRunAndSeq,
   findImpactByRunId,
   findRunById,
@@ -13,6 +14,8 @@ import {
   insertRun,
   updateRunStatus,
 } from './runs.repository';
+
+const COMPLETED_STATUSES = new Set(['done', 'done_degraded']);
 
 /**
  * Creates a run and guarantees it was handed to RabbitMQ before returning 201.
@@ -62,6 +65,7 @@ export async function startRun(dayId: string, versionId: string) {
 export async function getRun(id: string) {
   const row = await findRunById(id);
   if (!row) throw notFound('run_not_found', `Run '${id}' not found`);
+  const { total, failed } = await countDecisionsByRunId(id);
   return {
     id: row.id,
     day_id: row.dayId,
@@ -73,13 +77,16 @@ export async function getRun(id: string) {
     label: row.label,
     created_at: row.createdAt,
     completed_at: row.completedAt,
+    decisions_total: total,
+    decisions_failed: failed,
   };
 }
 
 export async function getRunTimeline(runId: string) {
   const run = await findRunById(runId);
   if (!run) throw notFound('run_not_found', `Run '${runId}' not found`);
-  if (run.status !== 'done') throw badRequest('run_not_complete', 'Run has not completed yet');
+  if (!COMPLETED_STATUSES.has(run.status))
+    throw badRequest('run_not_complete', 'Run has not completed yet');
 
   const steps = await findRunStepsByRunId(runId);
   return steps.map((s) => ({
@@ -93,7 +100,8 @@ export async function getRunTimeline(runId: string) {
 export async function getRunImpact(runId: string) {
   const run = await findRunById(runId);
   if (!run) throw notFound('run_not_found', `Run '${runId}' not found`);
-  if (run.status !== 'done') throw badRequest('run_not_complete', 'Run has not completed yet');
+  if (!COMPLETED_STATUSES.has(run.status))
+    throw badRequest('run_not_complete', 'Run has not completed yet');
 
   const impact = await findImpactByRunId(runId);
   if (!impact) throw notFound('impact_not_found', `Impact for run '${runId}' not found`);
@@ -128,5 +136,6 @@ export async function getRunDecision(runId: string, eventSeq: number) {
     source: decision.source,
     valid: Boolean(decision.valid),
     latency_ms: decision.latencyMs,
+    failure_reason: decision.failureReason,
   };
 }
