@@ -40,6 +40,15 @@ export function findRunById(id: string) {
     .then((rows) => rows[0]);
 }
 
+export function claimQueuedRun(id: string) {
+  return db
+    .update(runs)
+    .set({ status: 'running' })
+    .where(and(eq(runs.id, id), eq(runs.status, 'queued')))
+    .returning()
+    .then((rows) => rows[0]);
+}
+
 export function updateRunStatus(id: string, status: string, completedAt?: string) {
   return db
     .update(runs)

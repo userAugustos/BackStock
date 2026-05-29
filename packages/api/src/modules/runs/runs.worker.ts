@@ -9,6 +9,7 @@ import { LOG_DOMAINS, logger } from '@core/logger';
 import { record } from '@core/telemetry';
 
 import {
+  claimQueuedRun,
   findRunById,
   insertDecisions,
   insertImpact,
@@ -24,15 +25,15 @@ const workerLogger = logger.child({ domain: LOG_DOMAINS.SIM });
  */
 export async function executeRun(runId: string): Promise<void> {
   return record('run.execute', async () => {
-    const run = await findRunById(runId);
-    if (!run) throw new Error(`Run '${runId}' not found`);
-
-    if (run.status !== 'queued') {
-      workerLogger.info('Skipping run execution', { run_id: runId, status: run.status });
+    const run = await claimQueuedRun(runId);
+    if (!run) {
+      const existingRun = await findRunById(runId);
+      workerLogger.info('Skipping run execution', {
+        run_id: runId,
+        status: existingRun?.status ?? 'missing',
+      });
       return;
     }
-
-    await updateRunStatus(runId, 'running');
 
     try {
       const day = await findDayById(run.dayId);

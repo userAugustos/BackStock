@@ -91,6 +91,10 @@ async function createDayAndVersion() {
 }
 
 describe('runs', () => {
+  test('executeRun no-ops when the run does not exist', async () => {
+    await executeRun('nonexistent-run');
+  });
+
   test('full run lifecycle: create, execute, read status/timeline/impact/decision', async () => {
     const { dayId, versionId } = await createDayAndVersion();
 
@@ -118,6 +122,7 @@ describe('runs', () => {
 
     const impactPremature = await fetch(`${RUNS_BASE()}/${runId}/impact`);
     expect(impactPremature.status).toBe(400);
+    await impactPremature.json();
 
     await executeRun(runId);
 
@@ -251,5 +256,30 @@ describe('runs', () => {
         JSON.stringify(tl2.data[i].state_snapshot)
       );
     }
+  });
+
+  test('concurrent duplicate execution only claims a queued run once', async () => {
+    const { dayId, versionId } = await createDayAndVersion();
+
+    const startRes = await fetch(`${DAYS_BASE()}/${dayId}/runs`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ version_id: versionId }),
+    });
+    expect(startRes.status).toBe(201);
+    const startBody = (await startRes.json()) as any;
+    const runId = startBody.data.id;
+
+    await Promise.all([executeRun(runId), executeRun(runId)]);
+
+    const doneRes = await fetch(`${RUNS_BASE()}/${runId}`);
+    expect(doneRes.status).toBe(200);
+    const doneBody = (await doneRes.json()) as any;
+    expect(doneBody.data.status).toBe('done');
+
+    const timelineRes = await fetch(`${RUNS_BASE()}/${runId}/timeline`);
+    expect(timelineRes.status).toBe(200);
+    const timelineBody = (await timelineRes.json()) as any;
+    expect(timelineBody.data).toHaveLength(EVENTS.length + 1);
   });
 });

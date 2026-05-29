@@ -178,7 +178,7 @@ function applyDeliveriesDueBy(state: SimState, targetTime: string): void {
 
   for (let i = 0; i < state.orders.length; i++) {
     const order = state.orders[i]!;
-    if (order.status !== 'in_transit' || !order.shipped_at) continue;
+    if ((order.status !== 'in_transit' && order.status !== 'late') || !order.shipped_at) continue;
 
     const vendor = state.vendors[order.vendor_id];
     const sku = state.skus[order.sku_id];

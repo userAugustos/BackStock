@@ -1,3 +1,4 @@
+import { config } from '@core/env';
 import { LOG_DOMAINS, logger } from '@core/logger';
 import { getTraceContext } from '@core/telemetry';
 
@@ -17,6 +18,8 @@ export interface PublishArgs<T> {
 }
 
 export async function publish<T>({ exchange, routingKey, payload }: PublishArgs<T>): Promise<void> {
+  if (config.isTest) return;
+
   const trace = getTraceContext();
   const pub = getConnection().createPublisher({
     confirm: true,
