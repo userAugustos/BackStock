@@ -146,3 +146,23 @@ export const impacts = sqliteTable('impacts', {
   endingInventoryValue: real('ending_inventory_value').notNull(),
   metrics: text('metrics'),
 });
+
+export const processedMessages = sqliteTable(
+  'processed_messages',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    subscriberId: text('subscriber_id').notNull(),
+    messageId: text('message_id').notNull(),
+    processedAt: text('processed_at')
+      .notNull()
+      .default(sql`(current_timestamp)`),
+  },
+  (table) => ({
+    subscriberMessageIdx: uniqueIndex('processed_messages_subscriber_message_idx').on(
+      table.subscriberId,
+      table.messageId
+    ),
+  })
+);

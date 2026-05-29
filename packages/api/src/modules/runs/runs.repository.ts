@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '@api/db/client';
-import { decisions, impacts, runs, runSteps } from '@api/db/schema';
+import { decisions, impacts, processedMessages, runs, runSteps } from '@api/db/schema';
 import type { Impact as SimImpact, SimState } from '@api/modules/simulation/simulation.types';
 
 interface InsertRunData {
@@ -40,15 +40,6 @@ export function findRunById(id: string) {
     .then((rows) => rows[0]);
 }
 
-export function claimQueuedRun(id: string) {
-  return db
-    .update(runs)
-    .set({ status: 'running' })
-    .where(and(eq(runs.id, id), eq(runs.status, 'queued')))
-    .returning()
-    .then((rows) => rows[0]);
-}
-
 export function updateRunStatus(id: string, status: string, completedAt?: string) {
   return db
     .update(runs)
@@ -61,6 +52,13 @@ interface InsertRunStepData {
   seq: number;
   stateSnapshot: SimState;
   orderState: unknown[];
+}
+
+function isProcessedMessageDuplicate(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.message.includes('processed_messages') && error.message.includes('constraint failed')
+  );
 }
 
 export function insertRunSteps(stepsData: InsertRunStepData[]) {
@@ -133,6 +131,89 @@ export function findDecisionByRunAndSeq(runId: string, eventSeq: number) {
 interface InsertImpactData {
   runId: string;
   impact: SimImpact;
+}
+
+interface CompleteRunOnceData {
+  runId: string;
+  subscriberId: string;
+  messageId: string;
+  steps: InsertRunStepData[];
+  decisions: InsertDecisionData[];
+  impact: SimImpact;
+  completedAt: string;
+}
+
+export function completeRunOnce(data: CompleteRunOnceData): boolean {
+  try {
+    db.transaction((tx) => {
+      tx.insert(processedMessages)
+        .values({
+          id: crypto.randomUUID(),
+          subscriberId: data.subscriberId,
+          messageId: data.messageId,
+        })
+        .run();
+
+      if (data.steps.length > 0) {
+        tx.insert(runSteps)
+          .values(
+            data.steps.map((s) => ({
+              id: crypto.randomUUID(),
+              runId: s.runId,
+              seq: s.seq,
+              stateSnapshot: JSON.stringify(s.stateSnapshot),
+              orderState: JSON.stringify(s.orderState),
+            }))
+          )
+          .run();
+      }
+
+      if (data.decisions.length > 0) {
+        tx.insert(decisions)
+          .values(
+            data.decisions.map((d) => ({
+              id: crypto.randomUUID(),
+              runId: d.runId,
+              eventSeq: d.eventSeq,
+              agent: d.agent,
+              contextSnapshot: JSON.stringify(d.contextSnapshot),
+              promptVersion: d.promptVersion,
+              modelId: d.modelId,
+              rawOutput: d.rawOutput,
+              parsed: JSON.stringify(d.parsed),
+              reasoning: d.reasoning,
+              source: d.source,
+              valid: d.valid ? 1 : 0,
+              latencyMs: d.latencyMs,
+            }))
+          )
+          .run();
+      }
+
+      tx.insert(impacts)
+        .values({
+          id: crypto.randomUUID(),
+          runId: data.runId,
+          wastePct: data.impact.waste_pct,
+          wasteValue: data.impact.waste_value,
+          stockoutEvents: data.impact.stockout_events,
+          missedRevenue: data.impact.missed_revenue,
+          endingMarginPct: data.impact.ending_margin_pct,
+          endingInventoryValue: data.impact.ending_inventory_value,
+          metrics: data.impact.metrics ? JSON.stringify(data.impact.metrics) : null,
+        })
+        .run();
+
+      tx.update(runs)
+        .set({ status: 'done', completedAt: data.completedAt })
+        .where(eq(runs.id, data.runId))
+        .run();
+    });
+    return true;
+  } catch (error) {
+    if (isProcessedMessageDuplicate(error)) return false;
+    throw error;
+  }
 }
 
 export function insertImpact(data: InsertImpactData) {

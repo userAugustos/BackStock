@@ -258,7 +258,7 @@ describe('runs', () => {
     }
   });
 
-  test('concurrent duplicate execution only claims a queued run once', async () => {
+  test('concurrent duplicate execution only persists one run result', async () => {
     const { dayId, versionId } = await createDayAndVersion();
 
     const startRes = await fetch(`${DAYS_BASE()}/${dayId}/runs`, {
