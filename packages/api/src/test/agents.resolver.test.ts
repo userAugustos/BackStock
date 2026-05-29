@@ -175,7 +175,7 @@ describe('createLlmDecisionResolver', () => {
     expect(fake.calls).toHaveLength(2);
   });
 
-  test('falls back to safe default after retry also fails', async () => {
+  test("falls back with failure_reason 'invalid_response' when JSON parse fails twice", async () => {
     const fake = createFakeLlmClient({
       response: 'totally invalid json !!@@##',
     });
@@ -192,16 +192,45 @@ describe('createLlmDecisionResolver', () => {
     expect(decision.agent).toBe('inventory');
     if (decision.agent !== 'inventory') throw new Error('wrong agent');
     expect(decision.order_cases).toBe(0);
-    expect(decision.summary).toContain('Fallback');
+    expect(decision.summary).toBe('');
+    expect(resolved.source).toBe('failure');
+    expect(resolved.failure_reason).toBe('invalid_response');
     expect(resolved.valid).toBe(false);
     expect(resolved.raw_output).toBe('totally invalid json !!@@##');
     expect(fake.calls).toHaveLength(2);
   });
 
-  test('falls back on LLM client error (network failure)', async () => {
+  test("falls back with failure_reason 'invalid_response' when schema validation fails twice", async () => {
+    const fake = createFakeLlmClient({
+      response: JSON.stringify({
+        order_cases: -5,
+        sku: 'milk-2pct-gal',
+        summary: 'negative cases',
+      }),
+    });
+    const resolver = createLlmDecisionResolver({
+      client: fake.client,
+      catalogSkuIds: CATALOG_SKU_IDS,
+      modelId: 'test-model',
+      inventoryPromptVersion: 'inv-v1',
+      pricingPromptVersion: 'price-v1',
+    });
+
+    const resolved = await resolver('inventory', baseState, inventoryEvent);
+    const { decision } = resolved;
+    if (decision.agent !== 'inventory') throw new Error('wrong agent');
+    expect(decision.order_cases).toBe(0);
+    expect(decision.summary).toBe('');
+    expect(resolved.source).toBe('failure');
+    expect(resolved.failure_reason).toBe('invalid_response');
+    expect(resolved.valid).toBe(false);
+    expect(fake.calls).toHaveLength(2);
+  });
+
+  test("falls back with failure_reason 'llm_http_error' on client thrown error", async () => {
     const fake = createFakeLlmClient({ response: 'valid' });
     fake.client.chat = async () => {
-      throw new Error('Network error');
+      throw new Error('LLM request failed: 500 Internal Server Error - boom');
     };
     const resolver = createLlmDecisionResolver({
       client: fake.client,
@@ -213,14 +242,36 @@ describe('createLlmDecisionResolver', () => {
 
     const resolved = await resolver('inventory', baseState, inventoryEvent);
     const { decision } = resolved;
-    expect(decision.agent).toBe('inventory');
     if (decision.agent !== 'inventory') throw new Error('wrong agent');
     expect(decision.order_cases).toBe(0);
-    expect(decision.summary).toContain('Fallback');
+    expect(decision.summary).toBe('');
+    expect(resolved.source).toBe('failure');
+    expect(resolved.failure_reason).toBe('llm_http_error');
     expect(resolved.valid).toBe(false);
   });
 
-  test('falls back when LLM returns empty choices', async () => {
+  test("falls back with failure_reason 'llm_timeout' when client throws AbortError", async () => {
+    const fake = createFakeLlmClient({ response: 'valid' });
+    fake.client.chat = async () => {
+      const err = new Error('The operation was aborted.');
+      (err as { name: string }).name = 'AbortError';
+      throw err;
+    };
+    const resolver = createLlmDecisionResolver({
+      client: fake.client,
+      catalogSkuIds: CATALOG_SKU_IDS,
+      modelId: 'test-model',
+      inventoryPromptVersion: 'inv-v1',
+      pricingPromptVersion: 'price-v1',
+    });
+
+    const resolved = await resolver('inventory', baseState, inventoryEvent);
+    expect(resolved.source).toBe('failure');
+    expect(resolved.failure_reason).toBe('llm_timeout');
+    expect(resolved.valid).toBe(false);
+  });
+
+  test("falls back with failure_reason 'invalid_response' when LLM returns empty choices", async () => {
     const fake = createFakeLlmClient({ response: 'x' });
     fake.client.chat = async () => ({ choices: [] });
     const resolver = createLlmDecisionResolver({
@@ -232,11 +283,28 @@ describe('createLlmDecisionResolver', () => {
     });
 
     const resolved = await resolver('inventory', baseState, inventoryEvent);
-    const { decision } = resolved;
-    expect(decision.agent).toBe('inventory');
-    if (decision.agent !== 'inventory') throw new Error('wrong agent');
-    expect(decision.order_cases).toBe(0);
+    expect(resolved.source).toBe('failure');
+    expect(resolved.failure_reason).toBe('invalid_response');
     expect(resolved.valid).toBe(false);
+  });
+
+  test("falls back with failure_reason 'prompt_missing' without calling the LLM", async () => {
+    const fake = createFakeLlmClient({ response: 'unused' });
+    const resolver = createLlmDecisionResolver({
+      client: fake.client,
+      catalogSkuIds: CATALOG_SKU_IDS,
+      modelId: 'test-model',
+      inventoryPromptVersion: 'inv-v1-not-registered',
+      pricingPromptVersion: 'price-v1-not-registered',
+    });
+
+    const resolved = await resolver('inventory', baseState, inventoryEvent);
+    expect(resolved.source).toBe('failure');
+    expect(resolved.failure_reason).toBe('prompt_missing');
+    expect(resolved.valid).toBe(false);
+    expect(resolved.raw_output).toBe('');
+    expect(resolved.latency_ms).toBe(0);
+    expect(fake.calls).toHaveLength(0);
   });
 
   test('sends system prompt + user context in messages', async () => {

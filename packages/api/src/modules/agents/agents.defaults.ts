@@ -1,25 +1,17 @@
 import type { Decision, DecisionAgent, SimState } from '@api/modules/simulation/simulation.types';
 
 /**
- * Safe fallback when LLM output can't be trusted after the retry: inventory places no
- * order, pricing keeps the current price. Recorded with `valid: false` so the fallback is
- * visible rather than silently applied.
+ * No-op `Decision` recorded when the agent failed to decide (prompt missing, LLM timeout,
+ * LLM http error, or invalid response after retry). Inventory: don't order. Pricing: keep
+ * the current price. `summary` is empty because no reasoning happened — callers should
+ * render the failure using the structured `failure_reason` on the ResolvedDecision instead
+ * of a string field that would have to lie about the cause.
  */
-export function safeDefault(agent: DecisionAgent, skuId: string, state: SimState): Decision {
+export function failure(agent: DecisionAgent, skuId: string, state: SimState): Decision {
   if (agent === 'inventory') {
-    return {
-      agent: 'inventory',
-      sku_id: skuId,
-      order_cases: 0,
-      summary: 'Fallback: LLM response invalid after retry; no order placed.',
-    };
+    return { agent: 'inventory', sku_id: skuId, order_cases: 0, summary: '' };
   }
 
   const currentPrice = state.skus[skuId]?.price ?? 0;
-  return {
-    agent: 'pricing',
-    sku_id: skuId,
-    new_price: currentPrice,
-    summary: 'Fallback: LLM response invalid after retry; price unchanged.',
-  };
+  return { agent: 'pricing', sku_id: skuId, new_price: currentPrice, summary: '' };
 }

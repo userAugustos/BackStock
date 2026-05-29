@@ -115,12 +115,21 @@ export interface PricingDecision {
 
 export type Decision = InventoryDecision | PricingDecision;
 
+export type DecisionSource = 'stub' | 'llm' | 'override' | 'reused' | 'failure';
+
+export type FailureReason =
+  | 'prompt_missing'
+  | 'llm_timeout'
+  | 'llm_http_error'
+  | 'invalid_response';
+
 export interface ResolvedDecision {
   decision: Decision;
   raw_output: string;
-  source: 'stub' | 'llm' | 'override' | 'reused';
+  source: DecisionSource;
   valid: boolean;
   latency_ms: number;
+  failure_reason?: FailureReason;
 }
 
 export type DecisionResolver = (
@@ -134,9 +143,10 @@ export interface DecisionRecord {
   decision: Decision;
   context_snapshot: SimState;
   raw_output: string;
-  source: 'stub' | 'llm' | 'override' | 'reused';
+  source: DecisionSource;
   valid: boolean;
   latency_ms: number;
+  failure_reason?: FailureReason;
 }
 
 export interface RunStep {
