@@ -57,6 +57,25 @@ async function postDay(overrides: Record<string, unknown> = {}) {
 }
 
 describe('days', () => {
+  test('normalizer ignores extra payload fields when checking references', async () => {
+    const res = await postDay({
+      name: `extra-payload-fields-${crypto.randomUUID()}`,
+      events: [
+        {
+          seq: 0,
+          at: '08:00',
+          type: 'manager_override',
+          payload: { target: 'reorder', action: 'approve', sku: 'nonexistent-sku' },
+        },
+      ],
+    });
+
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as any;
+    expect(body.data.event_count).toBe(1);
+    expect(body.data.ignored_report).toBeNull();
+  });
+
   test('POST + GET + normalizer + validation + error paths', async () => {
     // 1. POST happy path: all events accepted
     const happyName = `test-day-${crypto.randomUUID()}`;

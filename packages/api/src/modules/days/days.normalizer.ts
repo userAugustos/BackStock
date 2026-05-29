@@ -77,7 +77,8 @@ export function normalizeDayEvents(seedState: SeedState, rawEvents: EventInput[]
     }
 
     const payloadSchema = EventPayloadSchemas[event.type as (typeof KNOWN_EVENT_TYPES)[number]];
-    if (!payloadSchema.safeParse(event.payload).success) {
+    const payloadParse = payloadSchema.safeParse(event.payload);
+    if (!payloadParse.success) {
       ignored.push({
         original_seq: event.seq,
         type: event.type,
@@ -86,7 +87,9 @@ export function normalizeDayEvents(seedState: SeedState, rawEvents: EventInput[]
       continue;
     }
 
-    const payloadSku = event.payload.sku as string | undefined;
+    const payload = payloadParse.data as Record<string, unknown>;
+
+    const payloadSku = payload.sku as string | undefined;
     if (payloadSku && !knownSkuIds.has(payloadSku)) {
       ignored.push({
         original_seq: event.seq,
@@ -96,7 +99,7 @@ export function normalizeDayEvents(seedState: SeedState, rawEvents: EventInput[]
       continue;
     }
 
-    const payloadVendor = event.payload.vendor as string | undefined;
+    const payloadVendor = payload.vendor as string | undefined;
     if (payloadVendor && !knownVendorIds.has(payloadVendor)) {
       ignored.push({
         original_seq: event.seq,
@@ -106,7 +109,7 @@ export function normalizeDayEvents(seedState: SeedState, rawEvents: EventInput[]
       continue;
     }
 
-    accepted.push(event);
+    accepted.push({ ...event, payload });
   }
 
   if (accepted.length === 0) {

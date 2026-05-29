@@ -28,15 +28,16 @@ export async function startRun(dayId: string, versionId: string) {
 
   const row = await insertRun({ dayId, versionId });
 
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
     const publishPromise = publish({
       exchange: RUNS_EXCHANGE,
       routingKey: RUN_REQUESTED_ROUTING_KEY,
       payload: { run_id: row.id },
     });
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('publish timeout')), 2000)
-    );
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error('publish timeout')), 2000);
+    });
     await Promise.race([publishPromise, timeout]);
   } catch (err) {
     await updateRunStatus(row.id, 'failed');
@@ -45,6 +46,8 @@ export async function startRun(dayId: string, versionId: string) {
       error: err instanceof Error ? err.message : String(err),
     });
     throw internalError('run_enqueue_failed', `Run '${row.id}' could not be queued`);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 
   return {

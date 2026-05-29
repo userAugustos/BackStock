@@ -8,31 +8,30 @@ import { wrapError } from '@core/errors';
 import { LOG_DOMAINS, logger } from '@core/logger';
 import { record } from '@core/telemetry';
 
-import {
-  findRunById,
-  insertDecisions,
-  insertImpact,
-  insertRunSteps,
-  updateRunStatus,
-} from './runs.repository';
+import { completeRunOnce, findRunById, updateRunStatus } from './runs.repository';
 
 const workerLogger = logger.child({ domain: LOG_DOMAINS.SIM });
+const RUN_WORKER_SUBSCRIBER_ID = 'runs.worker';
 
 /**
- * Executes a queued run exactly once. Redelivered queue messages for completed,
- * failed, or already-running runs are treated as no-ops to preserve persisted results.
+ * Executes a queued run. Redelivered queue messages are idempotent because only
+ * one transaction can record the processed message and persist the run result.
  */
 export async function executeRun(runId: string): Promise<void> {
   return record('run.execute', async () => {
     const run = await findRunById(runId);
-    if (!run) throw new Error(`Run '${runId}' not found`);
+    if (!run) {
+      workerLogger.info('Skipping run execution', {
+        run_id: runId,
+        status: 'missing',
+      });
+      return;
+    }
 
     if (run.status !== 'queued') {
       workerLogger.info('Skipping run execution', { run_id: runId, status: run.status });
       return;
     }
-
-    await updateRunStatus(runId, 'running');
 
     try {
       const day = await findDayById(run.dayId);
@@ -53,17 +52,17 @@ export async function executeRun(runId: string): Promise<void> {
       const initialState = buildInitialState(seedState);
       const result = simulate(initialState, events, stubDecisionResolver);
 
-      await insertRunSteps(
-        result.steps.map((step) => ({
+      const completed = completeRunOnce({
+        runId,
+        subscriberId: RUN_WORKER_SUBSCRIBER_ID,
+        messageId: runId,
+        steps: result.steps.map((step) => ({
           runId,
           seq: step.seq,
           stateSnapshot: step.state_snapshot,
           orderState: step.order_state,
-        }))
-      );
-
-      await insertDecisions(
-        result.decisions.map((d) => ({
+        })),
+        decisions: result.decisions.map((d) => ({
           runId,
           eventSeq: d.event_seq,
           agent: d.decision.agent,
@@ -79,12 +78,15 @@ export async function executeRun(runId: string): Promise<void> {
           source: 'stub',
           valid: true,
           latencyMs: 0,
-        }))
-      );
+        })),
+        impact: result.impact,
+        completedAt: new Date().toISOString(),
+      });
 
-      await insertImpact({ runId, impact: result.impact });
-
-      await updateRunStatus(runId, 'done', new Date().toISOString());
+      if (!completed) {
+        workerLogger.info('Skipping duplicate run message', { run_id: runId });
+        return;
+      }
 
       workerLogger.info('Run completed', { run_id: runId });
     } catch (error) {
