@@ -94,6 +94,7 @@ interface InsertDecisionData {
   source: string;
   valid: boolean;
   latencyMs: number;
+  failureReason?: string | null;
 }
 
 export function insertDecisions(decisionsData: InsertDecisionData[]) {
@@ -115,6 +116,7 @@ export function insertDecisions(decisionsData: InsertDecisionData[]) {
         source: d.source,
         valid: d.valid ? 1 : 0,
         latencyMs: d.latencyMs,
+        failureReason: d.failureReason ?? null,
       }))
     )
     .returning();
@@ -126,6 +128,23 @@ export function findDecisionByRunAndSeq(runId: string, eventSeq: number) {
     .from(decisions)
     .where(and(eq(decisions.runId, runId), eq(decisions.eventSeq, eventSeq)))
     .then((rows) => rows[0]);
+}
+
+/**
+ * Counts decisions for a run and how many of them are `source = 'failure'`. Used by the
+ * run-detail endpoint to surface degraded runs honestly without scanning every decision
+ * row at the client.
+ */
+export async function countDecisionsByRunId(
+  runId: string
+): Promise<{ total: number; failed: number }> {
+  const rows = await db
+    .select({ source: decisions.source })
+    .from(decisions)
+    .where(eq(decisions.runId, runId));
+  const total = rows.length;
+  const failed = rows.reduce((n, r) => (r.source === 'failure' ? n + 1 : n), 0);
+  return { total, failed };
 }
 
 interface InsertImpactData {
@@ -143,7 +162,17 @@ interface CompleteRunOnceData {
   completedAt: string;
 }
 
+/**
+ * Persists a run's full result (steps, decisions, impact) in a single transaction along
+ * with an idempotency marker. The final run status is derived from the decisions: any
+ * `source: 'failure'` decision marks the run `done_degraded`; otherwise `done`. Redelivered
+ * queue messages collide on the processed-messages unique index and return false instead
+ * of double-writing.
+ */
 export function completeRunOnce(data: CompleteRunOnceData): boolean {
+  const failureCount = data.decisions.reduce((n, d) => (d.source === 'failure' ? n + 1 : n), 0);
+  const finalStatus = failureCount > 0 ? 'done_degraded' : 'done';
+
   try {
     db.transaction((tx) => {
       tx.insert(processedMessages)
@@ -185,6 +214,7 @@ export function completeRunOnce(data: CompleteRunOnceData): boolean {
               source: d.source,
               valid: d.valid ? 1 : 0,
               latencyMs: d.latencyMs,
+              failureReason: d.failureReason ?? null,
             }))
           )
           .run();
@@ -205,7 +235,7 @@ export function completeRunOnce(data: CompleteRunOnceData): boolean {
         .run();
 
       tx.update(runs)
-        .set({ status: 'done', completedAt: data.completedAt })
+        .set({ status: finalStatus, completedAt: data.completedAt })
         .where(eq(runs.id, data.runId))
         .run();
     });

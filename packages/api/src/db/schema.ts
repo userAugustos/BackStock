@@ -99,6 +99,7 @@ export const decisions = sqliteTable(
     source: text('source').notNull(),
     valid: integer('valid').notNull(),
     latencyMs: integer('latency_ms').notNull(),
+    failureReason: text('failure_reason'),
   },
   (table) => ({
     runEventAgentIdx: uniqueIndex('decisions_run_event_agent_idx').on(
