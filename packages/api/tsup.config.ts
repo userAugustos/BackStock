@@ -7,6 +7,7 @@ export default defineConfig((options) => ({
     core: 'src/sdk/core.ts',
     days: 'src/sdk/days.ts',
     versions: 'src/sdk/versions.ts',
+    runs: 'src/sdk/runs.ts',
   },
   format: ['esm'],
   dts: true,

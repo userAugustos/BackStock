@@ -22,6 +22,10 @@
     "./versions": {
       "types": "./dist/versions.d.ts",
       "import": "./dist/versions.js"
+    },
+    "./runs": {
+      "types": "./dist/runs.d.ts",
+      "import": "./dist/runs.js"
     }
   },
   "scripts": {
@@ -51,6 +55,7 @@
     "elysia": "1.4.22",
     "pino": "^10.1.1",
     "rabbitmq-client": "^5.0.8",
+    "xstate": "^5",
     "zod-to-json-schema": "^3.24.1"
   },
   "devDependencies": {
