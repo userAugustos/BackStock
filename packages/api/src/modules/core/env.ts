@@ -26,6 +26,14 @@ export const config = {
     managementUrl: env.RABBITMQ_MANAGEMENT_URL ?? '',
     managementPort: parseInteger(env.RABBITMQ_MANAGEMENT_PORT, 15672),
   },
+  llm: {
+    url: env.MODAL_LLM_URL ?? '',
+    token: env.MODAL_LLM_TOKEN ?? '',
+    proxyKey: env.MODAL_KEY ?? '',
+    proxySecret: env.MODAL_SECRET ?? '',
+    modelId: env.LLM_MODEL_ID ?? 'qwen-default',
+    timeoutMs: parseInteger(env.LLM_TIMEOUT_MS, 30_000),
+  },
 };
 
 export type Config = typeof config;

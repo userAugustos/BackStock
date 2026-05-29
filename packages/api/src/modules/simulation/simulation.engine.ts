@@ -83,13 +83,13 @@ interface EngineContext {
   decisions: SimulationResult['decisions'];
 }
 
-function applySalesEvent(
+async function applySalesEvent(
   state: SimState,
   skuId: string,
   multiplier: number,
   ctx: EngineContext,
   event: SimEvent
-): void {
+): Promise<void> {
   const sku = state.skus[skuId];
   if (!sku) return;
 
@@ -117,13 +117,14 @@ function applySalesEvent(
   }
 
   if (sku.on_hand < sku.case_size) {
-    const decision = ctx.resolver('inventory', structuredClone(state), event);
+    const resolved = await ctx.resolver('inventory', structuredClone(state), event);
     ctx.decisions.push({
       event_seq: event.seq,
-      decision,
+      ...resolved,
       context_snapshot: structuredClone(state),
     });
 
+    const { decision } = resolved;
     if (decision.agent === 'inventory') {
       const orderQuantity = decision.order_cases * sku.case_size;
       const vendorId = Object.keys(state.vendors)[0] ?? 'unknown';
@@ -133,14 +134,18 @@ function applySalesEvent(
   }
 }
 
-function applySalesSpike(state: SimState, event: SimEvent, ctx: EngineContext): void {
+async function applySalesSpike(
+  state: SimState,
+  event: SimEvent,
+  ctx: EngineContext
+): Promise<void> {
   const payload = event.payload as SalesSpikePayload;
-  applySalesEvent(state, payload.sku, payload.multiplier, ctx, event);
+  await applySalesEvent(state, payload.sku, payload.multiplier, ctx, event);
 }
 
-function applyPromotion(state: SimState, event: SimEvent, ctx: EngineContext): void {
+async function applyPromotion(state: SimState, event: SimEvent, ctx: EngineContext): Promise<void> {
   const payload = event.payload as PromotionPayload;
-  applySalesEvent(state, payload.sku, payload.demand_multiplier, ctx, event);
+  await applySalesEvent(state, payload.sku, payload.demand_multiplier, ctx, event);
 }
 
 function applyVendorDelay(state: SimState, event: SimEvent): void {
@@ -204,20 +209,25 @@ function applyDamageReport(state: SimState, event: SimEvent): void {
   sku.units_wasted += damaged;
 }
 
-function applyInvoiceCostChange(state: SimState, event: SimEvent, ctx: EngineContext): void {
+async function applyInvoiceCostChange(
+  state: SimState,
+  event: SimEvent,
+  ctx: EngineContext
+): Promise<void> {
   const payload = event.payload as InvoiceCostChangePayload;
   const sku = state.skus[payload.sku];
   if (!sku) return;
 
   sku.unit_cost = payload.new_unit_cost;
 
-  const decision = ctx.resolver('pricing', structuredClone(state), event);
+  const resolved = await ctx.resolver('pricing', structuredClone(state), event);
   ctx.decisions.push({
     event_seq: event.seq,
-    decision,
+    ...resolved,
     context_snapshot: structuredClone(state),
   });
 
+  const { decision } = resolved;
   if (decision.agent === 'pricing') {
     sku.price = decision.new_price;
   }
@@ -302,11 +312,11 @@ function computeImpact(initialState: SimState, finalState: SimState): Impact {
  * Event order is sequence-based, and any end-of-day deliveries are applied before
  * impact is computed so timeline and metrics describe the same final state.
  */
-export function simulate(
+export async function simulate(
   initialState: SimState,
   events: SimEvent[],
   resolver: DecisionResolver
-): SimulationResult {
+): Promise<SimulationResult> {
   const sorted = [...events].sort((a, b) => a.seq - b.seq);
   const state = structuredClone(initialState);
   const decisions: SimulationResult['decisions'] = [];
@@ -333,10 +343,10 @@ export function simulate(
 
     switch (event.type) {
       case 'sales_spike':
-        applySalesSpike(state, event, ctx);
+        await applySalesSpike(state, event, ctx);
         break;
       case 'promotion':
-        applyPromotion(state, event, ctx);
+        await applyPromotion(state, event, ctx);
         break;
       case 'vendor_delay':
         applyVendorDelay(state, event);
@@ -345,7 +355,7 @@ export function simulate(
         applyDamageReport(state, event);
         break;
       case 'invoice_cost_change':
-        applyInvoiceCostChange(state, event, ctx);
+        await applyInvoiceCostChange(state, event, ctx);
         break;
       case 'manager_override':
         applyManagerOverride(state, event);

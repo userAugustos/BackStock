@@ -115,16 +115,25 @@ export interface PricingDecision {
 
 export type Decision = InventoryDecision | PricingDecision;
 
+export interface ResolvedDecision {
+  decision: Decision;
+  raw_output: string;
+  source: 'stub' | 'llm' | 'override' | 'reused';
+  valid: boolean;
+  latency_ms: number;
+}
+
 export type DecisionResolver = (
   agent: DecisionAgent,
   context: SimState,
   event: SimEvent
-) => Decision;
+) => ResolvedDecision | Promise<ResolvedDecision>;
 
 export interface DecisionRecord {
   event_seq: number;
   decision: Decision;
   context_snapshot: SimState;
+  raw_output: string;
   source: 'stub' | 'llm' | 'override' | 'reused';
   valid: boolean;
   latency_ms: number;
@@ -148,10 +157,6 @@ export interface Impact {
 
 export interface SimulationResult {
   steps: RunStep[];
-  decisions: Array<{
-    event_seq: number;
-    decision: Decision;
-    context_snapshot: SimState;
-  }>;
+  decisions: DecisionRecord[];
   impact: Impact;
 }

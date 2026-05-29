@@ -34,31 +34,37 @@ describe('stub decision resolver', () => {
     current_time: '08:12',
   };
 
-  test('inventory stub orders exactly 1 case', () => {
+  test('inventory stub orders exactly 1 case', async () => {
     const event: SimEvent = {
       seq: 0,
       at: '08:12',
       type: 'sales_spike',
       payload: { sku: 'milk-2pct-gal', multiplier: 2.5 },
     };
-    const decision = stubDecisionResolver('inventory', baseState, event);
+    const resolved = await stubDecisionResolver('inventory', baseState, event);
+    const { decision } = resolved;
     expect(decision.agent).toBe('inventory');
     if (decision.agent !== 'inventory') throw new Error('wrong agent');
     expect(decision.order_cases).toBe(1);
     expect(decision.sku_id).toBe('milk-2pct-gal');
+    expect(resolved.source).toBe('stub');
+    expect(resolved.valid).toBe(true);
   });
 
-  test('pricing stub keeps current price', () => {
+  test('pricing stub keeps current price', async () => {
     const event: SimEvent = {
       seq: 3,
       at: '11:45',
       type: 'invoice_cost_change',
       payload: { sku: 'milk-2pct-gal', new_unit_cost: 3.1 },
     };
-    const decision = stubDecisionResolver('pricing', baseState, event);
+    const resolved = await stubDecisionResolver('pricing', baseState, event);
+    const { decision } = resolved;
     expect(decision.agent).toBe('pricing');
     if (decision.agent !== 'pricing') throw new Error('wrong agent');
     expect(decision.new_price).toBe(3.99);
     expect(decision.sku_id).toBe('milk-2pct-gal');
+    expect(resolved.source).toBe('stub');
+    expect(resolved.valid).toBe(true);
   });
 });
