@@ -140,7 +140,7 @@ describe('simulation determinism', () => {
     expect(advancedOrders.length).toBeGreaterThanOrEqual(1);
   });
 
-  test('approved in-transit orders deliver inventory when vendor delivery time arrives', () => {
+  test('approved in-transit orders deliver inventory when vendor delivery time arrives', async () => {
     const initial = buildInitialState({
       skus: [
         {
@@ -154,7 +154,7 @@ describe('simulation determinism', () => {
       ],
       vendors: [{ id: 'dairy-co', lead_time_hours: 1, next_delivery_at: '10:00' }],
     });
-    const result = simulate(
+    const result = await simulate(
       initial,
       [
         {
@@ -181,7 +181,7 @@ describe('simulation determinism', () => {
     expect(result.impact.ending_inventory_value).toBe(16.8);
   });
 
-  test('late orders deliver when the delayed vendor delivery time arrives', () => {
+  test('late orders deliver when the delayed vendor delivery time arrives', async () => {
     const initial = buildInitialState({
       skus: [
         {
@@ -195,7 +195,7 @@ describe('simulation determinism', () => {
       ],
       vendors: [{ id: 'dairy-co', lead_time_hours: 1, next_delivery_at: '10:00' }],
     });
-    const result = simulate(
+    const result = await simulate(
       initial,
       [
         {
