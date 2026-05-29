@@ -1,5 +1,10 @@
 import type { Decision, DecisionAgent, SimState } from '@api/modules/simulation/simulation.types';
 
+/**
+ * Safe fallback when LLM output can't be trusted after the retry: inventory places no
+ * order, pricing keeps the current price. Recorded with `valid: false` so the fallback is
+ * visible rather than silently applied.
+ */
 export function safeDefault(agent: DecisionAgent, skuId: string, state: SimState): Decision {
   if (agent === 'inventory') {
     return {

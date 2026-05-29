@@ -58,6 +58,10 @@ function getSchemaForAgent(agent: DecisionAgent, catalogSkuIds: string[], contex
   return pricingResponseSchema(catalogSkuIds, currentPrices);
 }
 
+/**
+ * Tolerates fenced LLM output: small models often wrap JSON in a ```json … ``` block,
+ * so strip the fence (when present) before parsing.
+ */
 function parseContent(content: string): unknown {
   const trimmed = content.trim();
   const jsonMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -82,6 +86,13 @@ function parsedToDecision(agent: DecisionAgent, parsed: Record<string, unknown>)
   };
 }
 
+/**
+ * Builds the decision resolver the simulation calls at each decision point: prompt the
+ * model, parse and validate against the day's catalog and guardrails, retry once feeding
+ * the validation error back, and if it still fails fall back to a safe default recorded as
+ * `valid: false` — never crash, always visible. A missing prompt version short-circuits to
+ * the same fallback.
+ */
 export function createLlmDecisionResolver(
   config: LlmResolverConfig
 ): (agent: DecisionAgent, context: SimState, event: SimEvent) => Promise<ResolvedDecision> {
