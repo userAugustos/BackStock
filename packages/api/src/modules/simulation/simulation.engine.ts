@@ -24,7 +24,8 @@ function roundMoney(x: number): number {
 }
 
 function parseTime(time: string): number {
-  const [h, m] = time.split(':').map(Number);
+  const clockTime = time.includes('T') ? time.split('T')[1]! : time;
+  const [h, m] = clockTime.split(':').map(Number);
   return h! + m! / 60;
 }
 

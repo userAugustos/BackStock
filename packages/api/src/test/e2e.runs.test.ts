@@ -29,7 +29,7 @@ const VALID_SEED_STATE = {
       case_size: 12,
     },
   ],
-  vendors: [{ id: 'dairy-co', lead_time_hours: 18, next_delivery_at: '10:00' }],
+  vendors: [{ id: 'dairy-co', lead_time_hours: 18, next_delivery_at: '2026-03-18T10:00:00' }],
 };
 
 const EVENTS = [
