@@ -315,6 +315,60 @@ describe('branching', () => {
     expect(body.error).toBe('version_not_found');
   });
 
+  test('decision_override with wrong agent vs parent decision -> 400', async () => {
+    const { dayId, versionId } = await createDayAndVersion();
+    const parentRunId = await createAndExecuteRun(dayId, versionId);
+
+    // seq 3 is invoice_cost_change -> parent decision is from the pricing agent.
+    // Sending an inventory-shaped override here is a category error.
+    const res = await fetch(`${RUNS_BASE()}/${parentRunId}/branch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        at_event_seq: 3,
+        change: {
+          type: 'decision_override',
+          decision: {
+            agent: 'inventory',
+            sku_id: 'milk-2pct-gal',
+            order_cases: 4,
+            summary: 'wrong agent',
+          },
+        },
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as any;
+    expect(body.error).toBe('override_agent_mismatch');
+  });
+
+  test('decision_override with wrong sku vs parent decision -> 400', async () => {
+    const { dayId, versionId } = await createDayAndVersion();
+    const parentRunId = await createAndExecuteRun(dayId, versionId);
+
+    // Parent pricing decision at seq 3 is for milk-2pct-gal; overriding a different sku
+    // would silently no-op in the engine, so the request must be rejected up front.
+    const res = await fetch(`${RUNS_BASE()}/${parentRunId}/branch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        at_event_seq: 3,
+        change: {
+          type: 'decision_override',
+          decision: {
+            agent: 'pricing',
+            sku_id: 'produce-lettuce',
+            new_price: 2.5,
+            summary: 'wrong sku',
+          },
+        },
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as any;
+    expect(body.error).toBe('override_sku_mismatch');
+  });
+
   test('determinism: branching at seq 0 with same version produces identical impact', async () => {
     const { dayId, versionId } = await createDayAndVersion();
     const parentRunId = await createAndExecuteRun(dayId, versionId);

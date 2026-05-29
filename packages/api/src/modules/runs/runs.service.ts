@@ -171,6 +171,23 @@ export async function branchRun(parentRunId: string, atEventSeq: number, change:
         'no_decision_at_seq',
         `No decision exists at event seq ${atEventSeq} in the parent run`
       );
+
+    // The fork resolver returns the override verbatim to whichever agent the engine
+    // invokes at this seq. If the override's agent or SKU differs from the parent's,
+    // the engine silently no-ops (e.g. price stays unchanged) while the override is
+    // still recorded — a "ghost" decision the timeline can't honestly reproduce.
+    if (change.decision.agent !== parentDecision.agent)
+      throw badRequest(
+        'override_agent_mismatch',
+        `Override agent '${change.decision.agent}' does not match parent decision agent '${parentDecision.agent}' at event seq ${atEventSeq}`
+      );
+
+    const parentSkuId = (JSON.parse(parentDecision.parsed) as { sku_id?: string }).sku_id;
+    if (parentSkuId && change.decision.sku_id !== parentSkuId)
+      throw badRequest(
+        'override_sku_mismatch',
+        `Override sku_id '${change.decision.sku_id}' does not match parent decision sku_id '${parentSkuId}' at event seq ${atEventSeq}`
+      );
   }
 
   let versionId = parentRun.versionId;
@@ -188,21 +205,26 @@ export async function branchRun(parentRunId: string, atEventSeq: number, change:
     forkChange: change as unknown as Record<string, unknown>,
   });
 
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
     const publishPromise = publish({
-      exchange: 'runs',
-      routingKey: 'run.requested',
+      exchange: RUNS_EXCHANGE,
+      routingKey: RUN_REQUESTED_ROUTING_KEY,
       payload: { run_id: row.id },
     });
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('publish timeout')), 2000)
-    );
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error('publish timeout')), 2000);
+    });
     await Promise.race([publishPromise, timeout]);
   } catch (err) {
-    logger.warn('Failed to publish run.requested for branch, run created but not queued', {
+    await updateRunStatus(row.id, 'failed');
+    logger.error('Failed to publish run.requested for branch', {
       run_id: row.id,
       error: err instanceof Error ? err.message : String(err),
     });
+    throw internalError('run_enqueue_failed', `Run '${row.id}' could not be queued`);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 
   return {
