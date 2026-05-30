@@ -104,6 +104,24 @@ function DayDetail() {
               </CardContent>
             </Card>
           </m.div>
+
+          <m.div variants={staggerItem}>
+            <RunTreePanel dayId={dayId} />
+          </m.div>
+
+          <m.div variants={staggerItem}>
+            <Card data-testid="ignored-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <FilterX className="size-4 text-[var(--warning)]" />
+                  Ignored events
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <IgnoredReport report={day.ignored_report} />
+              </CardContent>
+            </Card>
+          </m.div>
         </div>
 
         <div className="space-y-6">
@@ -123,24 +141,6 @@ function DayDetail() {
 
           <m.div variants={staggerItem}>
             <VersionsPanel />
-          </m.div>
-
-          <m.div variants={staggerItem}>
-            <RunTreePanel dayId={dayId} />
-          </m.div>
-
-          <m.div variants={staggerItem}>
-            <Card data-testid="ignored-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <FilterX className="size-4 text-[var(--warning)]" />
-                  Ignored events
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <IgnoredReport report={day.ignored_report} />
-              </CardContent>
-            </Card>
           </m.div>
         </div>
       </div>

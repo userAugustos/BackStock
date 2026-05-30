@@ -42,11 +42,22 @@ export function VersionsPanel() {
             testid="versions-empty"
           />
         ) : (
-          <ul className="space-y-2">
-            {query.data.map((version) => (
-              <VersionRow key={version.id} version={version} />
-            ))}
-          </ul>
+          <div className="relative">
+            <ul
+              data-testid="versions-list"
+              className="max-h-[30rem] space-y-2 overflow-y-auto pr-1 [scrollbar-gutter:stable]"
+            >
+              {query.data.map((version) => (
+                <VersionRow key={version.id} version={version} />
+              ))}
+            </ul>
+            {query.data.length > 5 ? (
+              <div
+                aria-hidden
+                className="from-card pointer-events-none absolute inset-x-1 bottom-0 h-6 bg-gradient-to-t to-transparent"
+              />
+            ) : null}
+          </div>
         )}
       </CardContent>
     </Card>
