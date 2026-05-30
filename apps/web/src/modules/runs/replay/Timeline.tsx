@@ -113,16 +113,16 @@ export function Timeline({ state, dispatch, stepCount, markers }: TimelineProps)
 function markerTone(variant: ReturnType<typeof getEventMeta>['variant']): string {
   switch (variant) {
     case 'good':
-      return 'bg-[var(--good)]/20 text-[var(--good)]';
+      return 'bg-card text-[var(--good)] ring-1 ring-[var(--good)]/40';
     case 'warning':
-      return 'bg-[var(--warning)]/20 text-[var(--warning)]';
+      return 'bg-card text-[var(--warning)] ring-1 ring-[var(--warning)]/40';
     case 'danger':
-      return 'bg-[var(--danger)]/20 text-[var(--danger)]';
+      return 'bg-card text-[var(--danger)] ring-1 ring-[var(--danger)]/40';
     case 'info':
-      return 'bg-[var(--info)]/20 text-[var(--info)]';
+      return 'bg-card text-[var(--info)] ring-1 ring-[var(--info)]/40';
     case 'signal':
-      return 'bg-primary/20 text-primary';
+      return 'bg-card text-primary ring-1 ring-primary/40';
     default:
-      return 'bg-muted text-muted-foreground';
+      return 'bg-card text-muted-foreground ring-1 ring-border';
   }
 }
