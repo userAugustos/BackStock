@@ -14,15 +14,13 @@ interface TimelineProps {
   dispatch: Dispatch<PlaybackAction>;
   stepCount: number;
   markers: EventMarker[];
-  /** Clock-aligned position per step; built once in ReplayScreen and threaded down. */
-  stepPositions: number[];
 }
 
 const STORE_OPEN_LABEL = '08:00';
 const STORE_CLOSE_LABEL = '22:00';
 
-export function Timeline({ state, dispatch, stepCount, markers, stepPositions }: TimelineProps) {
-  const playheadPct = stepToPosition(state.index, stepCount, stepPositions) * 100;
+export function Timeline({ state, dispatch, stepCount, markers }: TimelineProps) {
+  const playheadPct = stepToPosition(state.index, stepCount) * 100;
   const lastIndex = Math.max(stepCount - 1, 0);
 
   return (

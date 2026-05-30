@@ -135,28 +135,8 @@ export function buildEventMarkers(events: DayEvent[]): EventMarker[] {
   }));
 }
 
-/**
- * Compute the playhead/fill position for each timeline step on the SAME clock
- * axis the event markers use. Step 0 is the initial state at store open; step
- * `i+1` is the state after event `i` was applied, so it sits at that event's
- * clock time. Without this the fill races on a step-count scale while markers
- * sit on a clock scale, and they visibly disagree on where the playhead is.
- */
-export function buildStepPositions(events: DayEvent[], stepCount: number): number[] {
-  const sorted = events.toSorted((a, b) => a.seq - b.seq);
-  const positions: number[] = new Array(stepCount).fill(1);
-  positions[0] = 0;
-  for (let i = 0; i < sorted.length && i + 1 < stepCount; i++) {
-    positions[i + 1] = clockToPosition(sorted[i]!.at);
-  }
-  return positions;
-}
-
-/** Fraction 0..1 of the playhead. Prefers the clock-aligned positions from `buildStepPositions`. */
-export function stepToPosition(index: number, stepCount: number, stepPositions?: number[]): number {
-  if (stepPositions && stepPositions.length > 0) {
-    return stepPositions[index] ?? stepPositions[stepPositions.length - 1] ?? 0;
-  }
+/** Fraction 0..1 of the playhead across the step range (0..lastStep). */
+export function stepToPosition(index: number, stepCount: number): number {
   if (stepCount <= 1) return 0;
   return index / (stepCount - 1);
 }
