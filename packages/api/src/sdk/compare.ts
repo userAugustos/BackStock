@@ -11,4 +11,4 @@ export type {
   CompareTimelineEntry,
   ImpactDelta,
   ImpactValues,
-} from '../modules/compare/compare.service';
+} from '../modules/compare/compare.types';

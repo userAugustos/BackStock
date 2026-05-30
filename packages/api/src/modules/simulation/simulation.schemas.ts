@@ -29,9 +29,14 @@ const VersionChangeSchema = z.object({
   version_id: z.string().min(1),
 });
 
+export const ForkChangeSchema = z.discriminatedUnion('type', [
+  DecisionOverrideSchema,
+  VersionChangeSchema,
+]);
+
 export const BranchRunBodySchema = z.object({
   at_event_seq: z.number().int().min(0),
-  change: z.discriminatedUnion('type', [DecisionOverrideSchema, VersionChangeSchema]),
+  change: ForkChangeSchema,
 });
 
 export type BranchRunBody = z.infer<typeof BranchRunBodySchema>;

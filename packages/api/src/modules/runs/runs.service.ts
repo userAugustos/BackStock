@@ -2,7 +2,13 @@ import { findDayById, findEventsByDayId } from '@api/modules/days/days.repositor
 import { publish } from '@api/modules/queue/publisher';
 import { RUN_REQUESTED_ROUTING_KEY, RUNS_EXCHANGE } from '@api/modules/queue/topology';
 import { findVersionById } from '@api/modules/versions/versions.repository';
-import type { ForkChange } from '@api/modules/simulation/simulation.types';
+import type {
+  Decision,
+  DecisionAgent,
+  ForkChange,
+  OrderState,
+  SimState,
+} from '@api/modules/simulation/simulation.types';
 import { badRequest, internalError, notFound } from '@core/errors';
 import { logger } from '@core/logger';
 
@@ -11,18 +17,29 @@ import {
   findDecisionByRunAndSeq,
   findImpactByRunId,
   findRunById,
+  findRunsByDayId,
   findRunStepsByRunId,
   insertRun,
   updateRunStatus,
 } from './runs.repository';
 import { isCompletedRunStatus } from './runs.status';
+import type {
+  BranchResult,
+  Run,
+  RunDecision,
+  RunImpact,
+  RunListItem,
+  RunStatus,
+  RunSummary,
+  RunTimelineStep,
+} from './runs.types';
 
 /**
  * Creates a run and guarantees it was handed to RabbitMQ before returning 201.
  * If enqueueing fails, the persisted row is marked failed so clients do not see
  * a permanently queued run that no worker can process.
  */
-export async function startRun(dayId: string, versionId: string) {
+export async function startRun(dayId: string, versionId: string): Promise<RunSummary> {
   const day = await findDayById(dayId);
   if (!day) throw notFound('day_not_found', `Day '${dayId}' not found`);
 
@@ -57,12 +74,12 @@ export async function startRun(dayId: string, versionId: string) {
     id: row.id,
     day_id: row.dayId,
     version_id: row.versionId,
-    status: row.status,
+    status: row.status as RunStatus,
     created_at: row.createdAt,
   };
 }
 
-export async function getRun(id: string) {
+export async function getRun(id: string): Promise<Run> {
   const row = await findRunById(id);
   if (!row) throw notFound('run_not_found', `Run '${id}' not found`);
   const { total, failed } = await countDecisionsByRunId(id);
@@ -72,8 +89,8 @@ export async function getRun(id: string) {
     version_id: row.versionId,
     parent_run_id: row.parentRunId,
     fork_event_seq: row.forkEventSeq,
-    fork_change: row.forkChange ? JSON.parse(row.forkChange) : null,
-    status: row.status,
+    fork_change: row.forkChange ? (JSON.parse(row.forkChange) as ForkChange) : null,
+    status: row.status as RunStatus,
     label: row.label,
     created_at: row.createdAt,
     completed_at: row.completedAt,
@@ -82,7 +99,26 @@ export async function getRun(id: string) {
   };
 }
 
-export async function getRunTimeline(runId: string) {
+export async function listRunsForDay(dayId: string): Promise<RunListItem[]> {
+  const day = await findDayById(dayId);
+  if (!day) throw notFound('day_not_found', `Day '${dayId}' not found`);
+
+  const rows = await findRunsByDayId(dayId);
+  return rows.map((row) => ({
+    id: row.id,
+    day_id: row.dayId,
+    version_id: row.versionId,
+    parent_run_id: row.parentRunId,
+    fork_event_seq: row.forkEventSeq,
+    fork_change: row.forkChange ? (JSON.parse(row.forkChange) as ForkChange) : null,
+    status: row.status as RunStatus,
+    label: row.label,
+    created_at: row.createdAt,
+    completed_at: row.completedAt,
+  }));
+}
+
+export async function getRunTimeline(runId: string): Promise<RunTimelineStep[]> {
   const run = await findRunById(runId);
   if (!run) throw notFound('run_not_found', `Run '${runId}' not found`);
   if (!isCompletedRunStatus(run.status))
@@ -91,13 +127,13 @@ export async function getRunTimeline(runId: string) {
   const steps = await findRunStepsByRunId(runId);
   return steps.map((s) => ({
     seq: s.seq,
-    state_snapshot: JSON.parse(s.stateSnapshot),
-    order_state: JSON.parse(s.orderState),
+    state_snapshot: JSON.parse(s.stateSnapshot) as SimState,
+    order_state: JSON.parse(s.orderState) as OrderState[],
     created_at: s.createdAt,
   }));
 }
 
-export async function getRunImpact(runId: string) {
+export async function getRunImpact(runId: string): Promise<RunImpact> {
   const run = await findRunById(runId);
   if (!run) throw notFound('run_not_found', `Run '${runId}' not found`);
   if (!isCompletedRunStatus(run.status))
@@ -117,7 +153,7 @@ export async function getRunImpact(runId: string) {
   };
 }
 
-export async function getRunDecision(runId: string, eventSeq: number) {
+export async function getRunDecision(runId: string, eventSeq: number): Promise<RunDecision> {
   const run = await findRunById(runId);
   if (!run) throw notFound('run_not_found', `Run '${runId}' not found`);
 
@@ -126,14 +162,14 @@ export async function getRunDecision(runId: string, eventSeq: number) {
 
   return {
     event_seq: decision.eventSeq,
-    agent: decision.agent,
-    context_snapshot: JSON.parse(decision.contextSnapshot),
+    agent: decision.agent as DecisionAgent,
+    context_snapshot: JSON.parse(decision.contextSnapshot) as SimState,
     prompt_version: decision.promptVersion,
     model_id: decision.modelId,
     raw_output: decision.rawOutput,
-    parsed: JSON.parse(decision.parsed),
+    parsed: JSON.parse(decision.parsed) as Decision,
     reasoning: decision.reasoning,
-    source: decision.source,
+    source: decision.source as RunDecision['source'],
     valid: Boolean(decision.valid),
     latency_ms: decision.latencyMs,
     failure_reason: decision.failureReason,
@@ -149,7 +185,11 @@ export async function getRunDecision(runId: string, eventSeq: number) {
  * the worker uses the parent's recorded decisions to replay pre-fork steps and the
  * configured base resolver for at/after-fork steps.
  */
-export async function branchRun(parentRunId: string, atEventSeq: number, change: ForkChange) {
+export async function branchRun(
+  parentRunId: string,
+  atEventSeq: number,
+  change: ForkChange
+): Promise<BranchResult> {
   const parentRun = await findRunById(parentRunId);
   if (!parentRun) throw notFound('run_not_found', `Run '${parentRunId}' not found`);
   if (!isCompletedRunStatus(parentRun.status))
@@ -232,8 +272,8 @@ export async function branchRun(parentRunId: string, atEventSeq: number, change:
     version_id: row.versionId,
     parent_run_id: row.parentRunId,
     fork_event_seq: row.forkEventSeq,
-    fork_change: row.forkChange ? JSON.parse(row.forkChange) : null,
-    status: row.status,
+    fork_change: row.forkChange ? (JSON.parse(row.forkChange) as ForkChange) : null,
+    status: row.status as RunStatus,
     created_at: row.createdAt,
   };
 }

@@ -7,6 +7,7 @@ import {
   insertVersion,
 } from './versions.repository';
 import type { CreateVersionBody } from './versions.schemas';
+import type { Version } from './versions.types';
 
 function deserializeVersion(row: {
   id: string;
@@ -16,7 +17,7 @@ function deserializeVersion(row: {
   modelId: string;
   policy: string | null;
   createdAt: string;
-}) {
+}): Version {
   return {
     id: row.id,
     label: row.label,
@@ -28,12 +29,12 @@ function deserializeVersion(row: {
   };
 }
 
-export async function listVersions() {
+export async function listVersions(): Promise<Version[]> {
   const rows = await findAllVersions();
   return rows.map(deserializeVersion);
 }
 
-export async function createVersion(body: CreateVersionBody) {
+export async function createVersion(body: CreateVersionBody): Promise<Version> {
   const existing = await findVersionByLabel(body.label);
   if (existing) {
     throw conflict('version_label_exists', `Version label '${body.label}' already exists`);
@@ -42,7 +43,7 @@ export async function createVersion(body: CreateVersionBody) {
   return deserializeVersion(row);
 }
 
-export async function getVersion(id: string) {
+export async function getVersion(id: string): Promise<Version> {
   const row = await findVersionById(id);
   if (!row) {
     throw notFound('version_not_found', `Version '${id}' not found`);

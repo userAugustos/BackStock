@@ -214,6 +214,74 @@ describe('runs', () => {
     expect(body.error).toBe('run_not_found');
   });
 
+  test('GET /days/:id/runs lists all runs for a day, root first', async () => {
+    const { dayId, versionId } = await createDayAndVersion();
+
+    const r1 = await fetch(`${DAYS_BASE()}/${dayId}/runs`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ version_id: versionId }),
+    });
+    const run1 = (await r1.json()) as any;
+    await executeRun(run1.data.id);
+
+    const r2 = await fetch(`${DAYS_BASE()}/${dayId}/runs`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ version_id: versionId }),
+    });
+    const run2 = (await r2.json()) as any;
+    await executeRun(run2.data.id);
+
+    const branchRes = await fetch(`${RUNS_BASE()}/${run1.data.id}/branch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        at_event_seq: 3,
+        change: {
+          type: 'decision_override',
+          decision: {
+            agent: 'pricing',
+            sku_id: 'milk-2pct-gal',
+            new_price: 5.99,
+            summary: 'Override: aggressive price hike',
+          },
+        },
+      }),
+    });
+    const branchBody = (await branchRes.json()) as any;
+    const branchedRunId = branchBody.data.id;
+
+    const listRes = await fetch(`${DAYS_BASE()}/${dayId}/runs`);
+    expect(listRes.status).toBe(200);
+    const listBody = (await listRes.json()) as any;
+    expect(Array.isArray(listBody.data)).toBe(true);
+    expect(listBody.data.length).toBe(3);
+
+    const ids: string[] = listBody.data.map((r: any) => r.id);
+    expect(ids).toContain(run1.data.id);
+    expect(ids).toContain(run2.data.id);
+    expect(ids).toContain(branchedRunId);
+
+    const root = listBody.data.find((r: any) => r.id === run1.data.id);
+    expect(root.parent_run_id).toBeNull();
+    expect(root.fork_event_seq).toBeNull();
+    expect(root.day_id).toBe(dayId);
+    expect(root.version_id).toBe(versionId);
+
+    const branched = listBody.data.find((r: any) => r.id === branchedRunId);
+    expect(branched.parent_run_id).toBe(run1.data.id);
+    expect(branched.fork_event_seq).toBe(3);
+    expect(branched.fork_change.type).toBe('decision_override');
+  });
+
+  test('GET /days/:id/runs with nonexistent day -> 404', async () => {
+    const res = await fetch(`${DAYS_BASE()}/nonexistent-id/runs`);
+    expect(res.status).toBe(404);
+    const body = (await res.json()) as any;
+    expect(body.error).toBe('day_not_found');
+  });
+
   test('determinism: two runs of the same day produce identical impact', async () => {
     const { dayId, versionId } = await createDayAndVersion();
 

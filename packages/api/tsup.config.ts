@@ -8,6 +8,7 @@ export default defineConfig((options) => ({
     days: 'src/sdk/days.ts',
     versions: 'src/sdk/versions.ts',
     runs: 'src/sdk/runs.ts',
+    simulation: 'src/sdk/simulation.ts',
     compare: 'src/sdk/compare.ts',
   },
   format: ['esm'],

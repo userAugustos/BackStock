@@ -14,3 +14,13 @@ export type {
   EventInput,
   CreateDayBody,
 } from '../modules/days/days.schemas';
+
+export type { IgnoredEvent } from '../modules/days/days.normalizer';
+
+export type {
+  CreateDayResult,
+  DayDetail,
+  DayEvent,
+  DayListItem,
+  DaySource,
+} from '../modules/days/days.types';

@@ -1,8 +1,26 @@
 import { z } from 'zod';
 
-import { StartRunBodySchema } from '@api/modules/simulation/simulation.schemas';
+import { ForkChangeSchema, StartRunBodySchema } from '@api/modules/simulation/simulation.schemas';
+import type {
+  Decision,
+  DecisionAgent,
+  OrderState,
+  SimState,
+} from '@api/modules/simulation/simulation.types';
 
 const JsonObjectSchema = z.record(z.unknown());
+
+const isObject = (val: unknown): val is object => val !== null && typeof val === 'object';
+const SimStateSchema = z.custom<SimState>(isObject);
+const OrderStateSchema = z.custom<OrderState>(isObject);
+const DecisionSchema = z.custom<Decision>(isObject);
+const DecisionAgentSchema = z.custom<DecisionAgent>(
+  (val) => val === 'inventory' || val === 'pricing'
+);
+const DECISION_SOURCES = ['stub', 'llm', 'override', 'reused', 'failure'] as const;
+const DecisionSourceSchema = z.custom<(typeof DECISION_SOURCES)[number]>((val) =>
+  DECISION_SOURCES.includes(val as (typeof DECISION_SOURCES)[number])
+);
 
 export const RunParamsSchema = z.object({
   id: z.string().min(1),
@@ -28,7 +46,7 @@ export const RunStartSchema = z.object({
 export const RunDetailSchema = RunStartSchema.extend({
   parent_run_id: z.string().nullable(),
   fork_event_seq: z.number().int().nullable(),
-  fork_change: JsonObjectSchema.nullable(),
+  fork_change: ForkChangeSchema.nullable(),
   label: z.string().nullable(),
   completed_at: z.string().nullable(),
   decisions_total: z.number().int().nonnegative(),
@@ -37,8 +55,8 @@ export const RunDetailSchema = RunStartSchema.extend({
 
 export const RunTimelineItemSchema = z.object({
   seq: z.number().int().nonnegative(),
-  state_snapshot: JsonObjectSchema,
-  order_state: z.array(JsonObjectSchema),
+  state_snapshot: SimStateSchema,
+  order_state: z.array(OrderStateSchema),
   created_at: z.string(),
 });
 
@@ -54,14 +72,14 @@ export const RunImpactSchema = z.object({
 
 export const RunDecisionSchema = z.object({
   event_seq: z.number().int().nonnegative(),
-  agent: z.string(),
-  context_snapshot: JsonObjectSchema,
+  agent: DecisionAgentSchema,
+  context_snapshot: SimStateSchema,
   prompt_version: z.string(),
   model_id: z.string(),
   raw_output: z.string(),
-  parsed: z.unknown(),
+  parsed: DecisionSchema,
   reasoning: z.string(),
-  source: z.string(),
+  source: DecisionSourceSchema,
   valid: z.boolean(),
   latency_ms: z.number().int().nonnegative(),
   failure_reason: z.string().nullable(),
@@ -70,7 +88,15 @@ export const RunDecisionSchema = z.object({
 export const BranchedRunSchema = RunStartSchema.extend({
   parent_run_id: z.string(),
   fork_event_seq: z.number().int().nonnegative(),
-  fork_change: JsonObjectSchema,
+  fork_change: ForkChangeSchema,
+});
+
+export const RunListItemSchema = RunStartSchema.extend({
+  parent_run_id: z.string().nullable(),
+  fork_event_seq: z.number().int().nullable(),
+  fork_change: ForkChangeSchema.nullable(),
+  label: z.string().nullable(),
+  completed_at: z.string().nullable(),
 });
 
 export const StartRunEnvelopeSchema = z.object({ data: RunStartSchema });
@@ -79,5 +105,6 @@ export const RunTimelineEnvelopeSchema = z.object({ data: z.array(RunTimelineIte
 export const RunImpactEnvelopeSchema = z.object({ data: RunImpactSchema });
 export const RunDecisionEnvelopeSchema = z.object({ data: RunDecisionSchema });
 export const BranchRunEnvelopeSchema = z.object({ data: BranchedRunSchema });
+export const RunListEnvelopeSchema = z.object({ data: z.array(RunListItemSchema) });
 
 export { StartRunBodySchema };
