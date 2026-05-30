@@ -127,6 +127,9 @@ export async function executeRun(runId: string): Promise<void> {
             source: row.source as ResolvedDecision['source'],
             valid: Boolean(row.valid),
             latency_ms: row.latencyMs,
+            failure_reason: (row.failureReason ?? undefined) as ResolvedDecision['failure_reason'],
+            prompt_version: row.promptVersion,
+            model_id: row.modelId,
           });
         }
 
@@ -157,10 +160,11 @@ export async function executeRun(runId: string): Promise<void> {
           agent: d.decision.agent,
           contextSnapshot: d.context_snapshot,
           promptVersion:
-            d.decision.agent === 'pricing'
+            d.prompt_version ??
+            (d.decision.agent === 'pricing'
               ? version.pricingPromptVersion
-              : version.inventoryPromptVersion,
-          modelId: version.modelId,
+              : version.inventoryPromptVersion),
+          modelId: d.model_id ?? version.modelId,
           rawOutput: d.raw_output,
           parsed: d.decision,
           reasoning: d.decision.summary,

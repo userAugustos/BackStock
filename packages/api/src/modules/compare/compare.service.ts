@@ -4,6 +4,7 @@ import {
   findRunById,
   findRunStepsByRunId,
 } from '@api/modules/runs/runs.repository';
+import { isCompletedRunStatus } from '@api/modules/runs/runs.status';
 import { badRequest, notFound } from '@core/errors';
 
 export interface CompareRunMeta {
@@ -56,6 +57,13 @@ export interface CompareResult {
   };
 }
 
+type RunRow = NonNullable<Awaited<ReturnType<typeof findRunById>>>;
+
+interface ForkDescriptor {
+  parentRunId: string;
+  forkEventSeq: number;
+}
+
 function computeDelta(a: ImpactValues, b: ImpactValues): ImpactValues {
   const round = (x: number) => Math.round(x * 100) / 100;
   return {
@@ -68,14 +76,54 @@ function computeDelta(a: ImpactValues, b: ImpactValues): ImpactValues {
   };
 }
 
+function getForkDescriptor(run: RunRow): ForkDescriptor | null {
+  if (!run.parentRunId || run.forkEventSeq === null) return null;
+  return { parentRunId: run.parentRunId, forkEventSeq: run.forkEventSeq };
+}
+
+function isSameFork(a: ForkDescriptor | null, b: ForkDescriptor): boolean {
+  return a?.parentRunId === b.parentRunId && a.forkEventSeq === b.forkEventSeq;
+}
+
+function supportsFork(run: RunRow, fork: ForkDescriptor): boolean {
+  return run.id === fork.parentRunId || isSameFork(getForkDescriptor(run), fork);
+}
+
+function findCommonFork(runs: RunRow[]): ForkDescriptor | null {
+  const candidates: ForkDescriptor[] = [];
+
+  for (const run of runs) {
+    const fork = getForkDescriptor(run);
+    if (!fork) continue;
+    if (!candidates.some((candidate) => isSameFork(fork, candidate))) {
+      candidates.push(fork);
+    }
+  }
+
+  if (candidates.length === 0) return null;
+
+  const commonFork = candidates.find((candidate) =>
+    runs.every((run) => supportsFork(run, candidate))
+  );
+
+  if (!commonFork) {
+    throw badRequest(
+      'different_fork_points',
+      'Compared branch runs must share a parent run and fork event seq'
+    );
+  }
+
+  return commonFork;
+}
+
 /**
  * Aligns the timelines of 2 or 3 runs of the same day onto a single seq-indexed view
  * and computes pairwise impact deltas. Alignment is by step `seq`: each entry exposes
  * each run's step snapshot at that seq (when present) and the decision recorded against
  * the preceding event (`event_seq = seq - 1`), so divergent branches sit side by side
- * without renumbering. `divergence_seq` is the smallest non-null `fork_event_seq` across
- * the compared runs — the earliest point any branch left the parent's path; when all
- * runs are root runs it falls back to 0, meaning the entire timeline is shared.
+ * without renumbering. Compared branch runs must share a fork descriptor, either as
+ * siblings from the same parent+seq or as that parent plus its children. All-root
+ * comparisons have no fork descriptor and use `divergence_seq = 0`.
  */
 export async function compareRuns(runIds: string[]): Promise<CompareResult> {
   if (runIds.length < 2 || runIds.length > 3)
@@ -90,21 +138,20 @@ export async function compareRuns(runIds: string[]): Promise<CompareResult> {
     if (!runRows[i]) throw notFound('run_not_found', `Run '${uniqueIds[i]}' not found`);
   }
 
-  const runs = runRows as NonNullable<(typeof runRows)[number]>[];
+  const runs = runRows as RunRow[];
 
   const dayIds = new Set(runs.map((r) => r.dayId));
   if (dayIds.size !== 1)
     throw badRequest('different_days', 'All compared runs must belong to the same day');
 
   for (const run of runs) {
-    if (run.status !== 'done')
+    if (!isCompletedRunStatus(run.status))
       throw badRequest('run_not_complete', `Run '${run.id}' has not completed yet`);
   }
 
   const dayId = runs[0]!.dayId;
-
-  const forkSeqs = runs.map((r) => r.forkEventSeq).filter((s): s is number => s !== null);
-  const divergenceSeq = forkSeqs.length > 0 ? Math.min(...forkSeqs) : 0;
+  const commonFork = findCommonFork(runs);
+  const divergenceSeq = commonFork?.forkEventSeq ?? 0;
 
   const [allSteps, allDecisions, allImpacts] = await Promise.all([
     Promise.all(runs.map((r) => findRunStepsByRunId(r.id))),

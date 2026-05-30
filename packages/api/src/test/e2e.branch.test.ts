@@ -85,6 +85,21 @@ async function createDayAndVersion() {
   return { dayId, versionId };
 }
 
+async function createMissingPromptVersion() {
+  const versionRes = await fetch(`${config.app.apiUrl}/versions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      label: `e2e-branch-degraded-version-${crypto.randomUUID()}`,
+      inventory_prompt_version: 'inv-v1-does-not-exist',
+      pricing_prompt_version: 'price-v1-does-not-exist',
+      model_id: 'qwen-2.5-7b',
+    }),
+  });
+  const versionBody = (await versionRes.json()) as any;
+  return versionBody.data.id as string;
+}
+
 async function createAndExecuteRun(dayId: string, versionId: string): Promise<string> {
   const res = await fetch(`${DAYS_BASE()}/${dayId}/runs`, {
     method: 'POST',
@@ -271,6 +286,49 @@ describe('branching', () => {
     expect(res.status).toBe(400);
     const body = (await res.json()) as any;
     expect(body.error).toBe('run_not_complete');
+  });
+
+  test('branch accepts degraded completed parent and preserves reused failure state', async () => {
+    const { dayId } = await createDayAndVersion();
+    const degradedVersionId = await createMissingPromptVersion();
+    const parentRunId = await createAndExecuteRun(dayId, degradedVersionId);
+
+    const parentStatusRes = await fetch(`${RUNS_BASE()}/${parentRunId}`);
+    const parentStatusBody = (await parentStatusRes.json()) as any;
+    expect(parentStatusBody.data.status).toBe('done_degraded');
+
+    const branchRes = await fetch(`${RUNS_BASE()}/${parentRunId}/branch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        at_event_seq: 3,
+        change: {
+          type: 'decision_override',
+          decision: {
+            agent: 'pricing',
+            sku_id: 'milk-2pct-gal',
+            new_price: 5.99,
+            summary: 'Override degraded parent pricing decision',
+          },
+        },
+      }),
+    });
+    expect(branchRes.status).toBe(201);
+    const branchBody = (await branchRes.json()) as any;
+    const childRunId = branchBody.data.id;
+
+    await executeRun(childRunId);
+
+    const childStatusRes = await fetch(`${RUNS_BASE()}/${childRunId}`);
+    const childStatusBody = (await childStatusRes.json()) as any;
+    expect(childStatusBody.data.status).toBe('done_degraded');
+    expect(childStatusBody.data.decisions_failed).toBeGreaterThan(0);
+
+    const childDecision0Res = await fetch(`${RUNS_BASE()}/${childRunId}/decisions/0`);
+    const childDecision0Body = (await childDecision0Res.json()) as any;
+    expect(childDecision0Body.data.source).toBe('reused');
+    expect(childDecision0Body.data.valid).toBe(false);
+    expect(childDecision0Body.data.failure_reason).toBe('prompt_missing');
   });
 
   test('branch with at_event_seq beyond max event -> 400', async () => {

@@ -86,6 +86,21 @@ async function createDayAndVersion() {
   return { dayId, versionId };
 }
 
+async function createMissingPromptVersion() {
+  const versionRes = await fetch(`${config.app.apiUrl}/versions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      label: `e2e-compare-degraded-version-${crypto.randomUUID()}`,
+      inventory_prompt_version: 'inv-v1-does-not-exist',
+      pricing_prompt_version: 'price-v1-does-not-exist',
+      model_id: 'qwen-2.5-7b',
+    }),
+  });
+  const versionBody = (await versionRes.json()) as any;
+  return versionBody.data.id as string;
+}
+
 async function createAndExecuteRun(dayId: string, versionId: string): Promise<string> {
   const res = await fetch(`${DAYS_BASE()}/${dayId}/runs`, {
     method: 'POST',
@@ -223,6 +238,73 @@ describe('compare', () => {
     expect(compareRes.status).toBe(400);
     const body = (await compareRes.json()) as any;
     expect(body.error).toBe('different_days');
+  });
+
+  test('compare accepts degraded completed runs', async () => {
+    const { dayId, versionId } = await createDayAndVersion();
+    const runAId = await createAndExecuteRun(dayId, versionId);
+    const degradedVersionId = await createMissingPromptVersion();
+    const runBId = await createAndExecuteRun(dayId, degradedVersionId);
+
+    const runBStatusRes = await fetch(`${RUNS_BASE()}/${runBId}`);
+    const runBStatusBody = (await runBStatusRes.json()) as any;
+    expect(runBStatusBody.data.status).toBe('done_degraded');
+
+    const compareRes = await fetch(`${COMPARE_BASE()}?run_a=${runAId}&run_b=${runBId}`);
+    expect(compareRes.status).toBe(200);
+    const compareBody = (await compareRes.json()) as any;
+    expect(compareBody.data.impact.per_run[runAId]).toBeTruthy();
+    expect(compareBody.data.impact.per_run[runBId]).toBeTruthy();
+  });
+
+  test('compare rejects same-day branches that do not share a fork point', async () => {
+    const { dayId, versionId } = await createDayAndVersion();
+    const parentRunId = await createAndExecuteRun(dayId, versionId);
+
+    const branchAt3Res = await fetch(`${RUNS_BASE()}/${parentRunId}/branch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        at_event_seq: 3,
+        change: {
+          type: 'decision_override',
+          decision: {
+            agent: 'pricing',
+            sku_id: 'milk-2pct-gal',
+            new_price: 5.99,
+            summary: 'Branch at pricing decision',
+          },
+        },
+      }),
+    });
+    const branchAt3Body = (await branchAt3Res.json()) as any;
+    const branchAt3Id = branchAt3Body.data.id;
+    await executeRun(branchAt3Id);
+
+    const branchAt0Res = await fetch(`${RUNS_BASE()}/${parentRunId}/branch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        at_event_seq: 0,
+        change: {
+          type: 'decision_override',
+          decision: {
+            agent: 'inventory',
+            sku_id: 'milk-2pct-gal',
+            order_cases: 3,
+            summary: 'Branch at inventory decision',
+          },
+        },
+      }),
+    });
+    const branchAt0Body = (await branchAt0Res.json()) as any;
+    const branchAt0Id = branchAt0Body.data.id;
+    await executeRun(branchAt0Id);
+
+    const compareRes = await fetch(`${COMPARE_BASE()}?run_a=${branchAt3Id}&run_b=${branchAt0Id}`);
+    expect(compareRes.status).toBe(400);
+    const body = (await compareRes.json()) as any;
+    expect(body.error).toBe('different_fork_points');
   });
 
   test('compare with incomplete run -> 400', async () => {

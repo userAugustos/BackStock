@@ -39,6 +39,9 @@ export function createForkingResolver(ctx: ForkContext): DecisionResolver {
         source: 'reused' as const,
         valid: parentDecision.valid,
         latency_ms: 0,
+        failure_reason: parentDecision.failure_reason,
+        prompt_version: parentDecision.prompt_version,
+        model_id: parentDecision.model_id,
       };
     }
 

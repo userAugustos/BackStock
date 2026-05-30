@@ -131,7 +131,7 @@ export function findDecisionByRunAndSeq(runId: string, eventSeq: number) {
 }
 
 /**
- * Counts decisions for a run and how many of them are `source = 'failure'`. Used by the
+ * Counts decisions for a run and how many of them are invalid. Used by the
  * run-detail endpoint to surface degraded runs honestly without scanning every decision
  * row at the client.
  */
@@ -139,11 +139,11 @@ export async function countDecisionsByRunId(
   runId: string
 ): Promise<{ total: number; failed: number }> {
   const rows = await db
-    .select({ source: decisions.source })
+    .select({ valid: decisions.valid })
     .from(decisions)
     .where(eq(decisions.runId, runId));
   const total = rows.length;
-  const failed = rows.reduce((n, r) => (r.source === 'failure' ? n + 1 : n), 0);
+  const failed = rows.reduce((n, r) => (r.valid ? n : n + 1), 0);
   return { total, failed };
 }
 
@@ -173,12 +173,12 @@ interface CompleteRunOnceData {
 /**
  * Persists a run's full result (steps, decisions, impact) in a single transaction along
  * with an idempotency marker. The final run status is derived from the decisions: any
- * `source: 'failure'` decision marks the run `done_degraded`; otherwise `done`. Redelivered
+ * invalid decision marks the run `done_degraded`; otherwise `done`. Redelivered
  * queue messages collide on the processed-messages unique index and return false instead
  * of double-writing.
  */
 export function completeRunOnce(data: CompleteRunOnceData): boolean {
-  const failureCount = data.decisions.reduce((n, d) => (d.source === 'failure' ? n + 1 : n), 0);
+  const failureCount = data.decisions.reduce((n, d) => (d.valid ? n : n + 1), 0);
   const finalStatus = failureCount > 0 ? 'done_degraded' : 'done';
 
   try {

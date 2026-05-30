@@ -15,8 +15,7 @@ import {
   insertRun,
   updateRunStatus,
 } from './runs.repository';
-
-const COMPLETED_STATUSES = new Set(['done', 'done_degraded']);
+import { isCompletedRunStatus } from './runs.status';
 
 /**
  * Creates a run and guarantees it was handed to RabbitMQ before returning 201.
@@ -86,7 +85,7 @@ export async function getRun(id: string) {
 export async function getRunTimeline(runId: string) {
   const run = await findRunById(runId);
   if (!run) throw notFound('run_not_found', `Run '${runId}' not found`);
-  if (!COMPLETED_STATUSES.has(run.status))
+  if (!isCompletedRunStatus(run.status))
     throw badRequest('run_not_complete', 'Run has not completed yet');
 
   const steps = await findRunStepsByRunId(runId);
@@ -101,7 +100,7 @@ export async function getRunTimeline(runId: string) {
 export async function getRunImpact(runId: string) {
   const run = await findRunById(runId);
   if (!run) throw notFound('run_not_found', `Run '${runId}' not found`);
-  if (!COMPLETED_STATUSES.has(run.status))
+  if (!isCompletedRunStatus(run.status))
     throw badRequest('run_not_complete', 'Run has not completed yet');
 
   const impact = await findImpactByRunId(runId);
@@ -153,7 +152,7 @@ export async function getRunDecision(runId: string, eventSeq: number) {
 export async function branchRun(parentRunId: string, atEventSeq: number, change: ForkChange) {
   const parentRun = await findRunById(parentRunId);
   if (!parentRun) throw notFound('run_not_found', `Run '${parentRunId}' not found`);
-  if (parentRun.status !== 'done')
+  if (!isCompletedRunStatus(parentRun.status))
     throw badRequest('run_not_complete', 'Can only branch a completed run');
 
   const events = await findEventsByDayId(parentRun.dayId);

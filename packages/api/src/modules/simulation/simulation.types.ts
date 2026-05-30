@@ -130,6 +130,8 @@ export interface ResolvedDecision {
   valid: boolean;
   latency_ms: number;
   failure_reason?: FailureReason;
+  prompt_version?: string;
+  model_id?: string;
 }
 
 export type DecisionResolver = (
@@ -159,6 +161,8 @@ export interface DecisionRecord {
   valid: boolean;
   latency_ms: number;
   failure_reason?: FailureReason;
+  prompt_version?: string;
+  model_id?: string;
 }
 
 export interface RunStep {

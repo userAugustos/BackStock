@@ -220,4 +220,41 @@ describe('createForkingResolver', () => {
       /no parent decision found/i
     );
   });
+
+  test('reused parent decision preserves original audit metadata', async () => {
+    const parentDecisions = new Map<number, ResolvedDecision>();
+    parentDecisions.set(0, {
+      ...PARENT_DECISION_SEQ0,
+      prompt_version: 'parent-inventory-v1',
+      model_id: 'parent-model',
+      failure_reason: 'prompt_missing',
+      valid: false,
+    } as ResolvedDecision & {
+      prompt_version: string;
+      model_id: string;
+      failure_reason: 'prompt_missing';
+    });
+
+    const resolver = createForkingResolver({
+      parentDecisions,
+      forkEventSeq: 3,
+      forkChange: {
+        type: 'version',
+        version_id: 'child-version-id',
+      },
+      baseResolver,
+    });
+
+    const result = (await resolver('inventory', EMPTY_STATE, makeEvent(0))) as ResolvedDecision & {
+      prompt_version?: string;
+      model_id?: string;
+      failure_reason?: string;
+    };
+
+    expect(result.source).toBe('reused');
+    expect(result.prompt_version).toBe('parent-inventory-v1');
+    expect(result.model_id).toBe('parent-model');
+    expect(result.failure_reason).toBe('prompt_missing');
+    expect(result.valid).toBe(false);
+  });
 });

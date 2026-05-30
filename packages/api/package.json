@@ -26,6 +26,10 @@
     "./runs": {
       "types": "./dist/runs.d.ts",
       "import": "./dist/runs.js"
+    },
+    "./compare": {
+      "types": "./dist/compare.d.ts",
+      "import": "./dist/compare.js"
     }
   },
   "scripts": {
