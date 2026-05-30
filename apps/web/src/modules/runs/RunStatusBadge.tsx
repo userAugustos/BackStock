@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react';
 
 import type { RunStatus } from '@back-stock/api/runs';
 
@@ -12,11 +12,12 @@ const STATUS_META: Record<
   queued: { label: 'queued', variant: 'muted', spin: false, icon: Clock },
   running: { label: 'running', variant: 'signal', spin: true, icon: Loader2 },
   done: { label: 'done', variant: 'good', spin: false, icon: CheckCircle2 },
+  done_degraded: { label: 'done · degraded', variant: 'warning', spin: false, icon: AlertTriangle },
   failed: { label: 'failed', variant: 'danger', spin: false, icon: XCircle },
 };
 
 export function RunStatusBadge({ status }: { status: RunStatus }) {
-  const meta = STATUS_META[status];
+  const meta = STATUS_META[status]!;
   const Icon = meta.icon;
   return (
     <Badge variant={meta.variant} data-testid={`run-status-${status}`} className="font-mono">

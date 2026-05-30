@@ -1,12 +1,16 @@
 import type {
   Decision,
   DecisionAgent,
+  DecisionSource,
+  FailureReason,
   ForkChange,
   OrderState,
   SimState,
 } from '@api/modules/simulation/simulation.types';
 
-export type RunStatus = 'queued' | 'running' | 'done' | 'failed';
+import type { RunStatus } from './runs.status';
+
+export type { RunStatus } from './runs.status';
 
 export interface RunListItem {
   id: string;
@@ -71,8 +75,8 @@ export interface RunDecision {
   raw_output: string;
   parsed: Decision;
   reasoning: string;
-  source: 'stub' | 'llm' | 'override' | 'reused' | 'failure';
+  source: DecisionSource;
   valid: boolean;
   latency_ms: number;
-  failure_reason: string | null;
+  failure_reason: FailureReason | null;
 }

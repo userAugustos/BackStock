@@ -1,12 +1,15 @@
 import { z } from 'zod';
 
-import { ForkChangeSchema, StartRunBodySchema } from '@api/modules/simulation/simulation.schemas';
-import type {
-  Decision,
-  DecisionAgent,
-  OrderState,
-  SimState,
-} from '@api/modules/simulation/simulation.types';
+import {
+  DecisionAgentSchema,
+  DecisionSourceSchema,
+  FailureReasonSchema,
+  ForkChangeSchema,
+  StartRunBodySchema,
+} from '@api/modules/simulation/simulation.schemas';
+import type { Decision, OrderState, SimState } from '@api/modules/simulation/simulation.types';
+
+import { RunStatusSchema } from './runs.status';
 
 const JsonObjectSchema = z.record(z.unknown());
 
@@ -14,13 +17,6 @@ const isObject = (val: unknown): val is object => val !== null && typeof val ===
 const SimStateSchema = z.custom<SimState>(isObject);
 const OrderStateSchema = z.custom<OrderState>(isObject);
 const DecisionSchema = z.custom<Decision>(isObject);
-const DecisionAgentSchema = z.custom<DecisionAgent>(
-  (val) => val === 'inventory' || val === 'pricing'
-);
-const DECISION_SOURCES = ['stub', 'llm', 'override', 'reused', 'failure'] as const;
-const DecisionSourceSchema = z.custom<(typeof DECISION_SOURCES)[number]>((val) =>
-  DECISION_SOURCES.includes(val as (typeof DECISION_SOURCES)[number])
-);
 
 export const RunParamsSchema = z.object({
   id: z.string().min(1),
@@ -39,7 +35,7 @@ export const RunStartSchema = z.object({
   id: z.string(),
   day_id: z.string(),
   version_id: z.string(),
-  status: z.string(),
+  status: RunStatusSchema,
   created_at: z.string(),
 });
 
@@ -82,7 +78,7 @@ export const RunDecisionSchema = z.object({
   source: DecisionSourceSchema,
   valid: z.boolean(),
   latency_ms: z.number().int().nonnegative(),
-  failure_reason: z.string().nullable(),
+  failure_reason: FailureReasonSchema.nullable(),
 });
 
 export const BranchedRunSchema = RunStartSchema.extend({

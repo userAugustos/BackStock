@@ -97,7 +97,22 @@ export interface SimEvent {
     | ManagerOverridePayload;
 }
 
-export type DecisionAgent = 'inventory' | 'pricing';
+// Single source of truth for each enum: declare the tuple as const, then derive
+// the TS union AND the Zod schema from it (see simulation.schemas.ts). Adding a
+// member here fails typecheck wherever the producer/consumer hasn't caught up.
+export const DECISION_AGENTS = ['inventory', 'pricing'] as const;
+export type DecisionAgent = (typeof DECISION_AGENTS)[number];
+
+export const DECISION_SOURCES = ['stub', 'llm', 'override', 'reused', 'failure'] as const;
+export type DecisionSource = (typeof DECISION_SOURCES)[number];
+
+export const FAILURE_REASONS = [
+  'prompt_missing',
+  'llm_timeout',
+  'llm_http_error',
+  'invalid_response',
+] as const;
+export type FailureReason = (typeof FAILURE_REASONS)[number];
 
 export interface InventoryDecision {
   agent: 'inventory';
@@ -114,14 +129,6 @@ export interface PricingDecision {
 }
 
 export type Decision = InventoryDecision | PricingDecision;
-
-export type DecisionSource = 'stub' | 'llm' | 'override' | 'reused' | 'failure';
-
-export type FailureReason =
-  | 'prompt_missing'
-  | 'llm_timeout'
-  | 'llm_http_error'
-  | 'invalid_response';
 
 export interface ResolvedDecision {
   decision: Decision;

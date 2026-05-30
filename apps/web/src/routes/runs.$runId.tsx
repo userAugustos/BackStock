@@ -23,13 +23,14 @@ function RunDetail() {
   const { runId } = Route.useParams();
   const runQuery = useQuery(runQueryOptions(runId));
 
-  const isDone = runQuery.data?.status === 'done';
+  const status = runQuery.data?.status;
+  const isReplayable = status === 'done' || status === 'done_degraded';
 
-  const timelineQuery = useQuery(runTimelineQueryOptions(runId, isDone));
-  const impactQuery = useQuery(runImpactQueryOptions(runId, isDone));
+  const timelineQuery = useQuery(runTimelineQueryOptions(runId, isReplayable));
+  const impactQuery = useQuery(runImpactQueryOptions(runId, isReplayable));
   const eventsQuery = useQuery({
     ...dayEventsQueryOptions(runQuery.data?.day_id ?? ''),
-    enabled: isDone && Boolean(runQuery.data?.day_id),
+    enabled: isReplayable && Boolean(runQuery.data?.day_id),
   });
 
   if (runQuery.isPending) {

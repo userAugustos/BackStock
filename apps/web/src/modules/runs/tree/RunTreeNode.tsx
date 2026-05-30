@@ -13,6 +13,7 @@ const STATUS_DOT: Record<RunStatus, { tone: string; pulse: boolean; label: strin
   queued: { tone: 'bg-muted-foreground/60', pulse: false, label: 'queued' },
   running: { tone: 'bg-primary', pulse: true, label: 'running' },
   done: { tone: 'bg-[var(--good)]', pulse: false, label: 'done' },
+  done_degraded: { tone: 'bg-[var(--warning)]', pulse: false, label: 'done degraded' },
   failed: { tone: 'bg-[var(--danger)]', pulse: false, label: 'failed' },
 };
 

@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+import { DECISION_AGENTS, DECISION_SOURCES, FAILURE_REASONS } from './simulation.types';
+
+// Each Zod enum is derived from the matching tuple in simulation.types — adding
+// or renaming a member there is the only place a change has to happen.
+export const DecisionAgentSchema = z.enum(DECISION_AGENTS);
+export const DecisionSourceSchema = z.enum(DECISION_SOURCES);
+export const FailureReasonSchema = z.enum(FAILURE_REASONS);
+
 export const StartRunBodySchema = z.object({
   version_id: z.string().min(1),
 });

@@ -172,7 +172,7 @@ export async function getRunDecision(runId: string, eventSeq: number): Promise<R
     source: decision.source as RunDecision['source'],
     valid: Boolean(decision.valid),
     latency_ms: decision.latencyMs,
-    failure_reason: decision.failureReason,
+    failure_reason: decision.failureReason as RunDecision['failure_reason'],
   };
 }
 

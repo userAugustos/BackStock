@@ -45,7 +45,7 @@ export function VersionsPanel() {
           <div className="relative">
             <ul
               data-testid="versions-list"
-              className="max-h-[30rem] space-y-2 overflow-y-auto pr-1 [scrollbar-gutter:stable]"
+              className="max-h-[30rem] [scrollbar-gutter:stable] space-y-2 overflow-y-auto pr-1"
             >
               {query.data.map((version) => (
                 <VersionRow key={version.id} version={version} />

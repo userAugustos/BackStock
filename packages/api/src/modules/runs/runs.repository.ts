@@ -4,13 +4,15 @@ import { db } from '@api/db/client';
 import { decisions, impacts, processedMessages, runs, runSteps } from '@api/db/schema';
 import type { Impact as SimImpact, SimState } from '@api/modules/simulation/simulation.types';
 
+import type { RunStatus } from './runs.status';
+
 interface InsertRunData {
   dayId: string;
   versionId: string;
   parentRunId?: string | null;
   forkEventSeq?: number | null;
   forkChange?: Record<string, unknown> | null;
-  status?: string;
+  status?: RunStatus;
   label?: string | null;
 }
 
@@ -44,7 +46,7 @@ export function findRunsByDayId(dayId: string) {
   return db.select().from(runs).where(eq(runs.dayId, dayId)).orderBy(runs.createdAt);
 }
 
-export function updateRunStatus(id: string, status: string, completedAt?: string) {
+export function updateRunStatus(id: string, status: RunStatus, completedAt?: string) {
   return db
     .update(runs)
     .set({ status, ...(completedAt ? { completedAt } : {}) })
@@ -183,7 +185,7 @@ interface CompleteRunOnceData {
  */
 export function completeRunOnce(data: CompleteRunOnceData): boolean {
   const failureCount = data.decisions.reduce((n, d) => (d.valid ? n : n + 1), 0);
-  const finalStatus = failureCount > 0 ? 'done_degraded' : 'done';
+  const finalStatus: RunStatus = failureCount > 0 ? 'done_degraded' : 'done';
 
   try {
     db.transaction((tx) => {
