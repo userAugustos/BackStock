@@ -1,5 +1,7 @@
-export { StartRunBodySchema } from '../modules/simulation/simulation.schemas';
+export { BranchRunBodySchema, StartRunBodySchema } from '../modules/simulation/simulation.schemas';
 export {
+  BranchRunEnvelopeSchema,
+  BranchedRunSchema,
   RunDecisionEnvelopeSchema,
   RunDecisionParamsSchema,
   RunDetailEnvelopeSchema,
@@ -8,4 +10,4 @@ export {
   RunTimelineEnvelopeSchema,
   StartRunEnvelopeSchema,
 } from '../modules/runs/runs.schemas';
-export type { StartRunBody } from '../modules/simulation/simulation.schemas';
+export type { BranchRunBody, StartRunBody } from '../modules/simulation/simulation.schemas';

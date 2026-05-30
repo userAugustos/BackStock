@@ -7,6 +7,7 @@ import { Elysia } from 'elysia';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import { db } from '@api/db/client';
+import { compareRoutes } from '@api/modules/compare/compare.routes';
 import { daysRoutes } from '@api/modules/days/days.routes';
 import { seedHeroDay } from '@api/modules/days/days.seed';
 import { runsRoutes } from '@api/modules/runs/runs.routes';
@@ -74,7 +75,11 @@ export const createApp = () =>
       { detail: { summary: 'Health Check', tags: ['system'] } }
     );
 
-export const backStockApi = createApp().use(daysRoutes).use(versionsRoutes).use(runsRoutes);
+export const backStockApi = createApp()
+  .use(daysRoutes)
+  .use(versionsRoutes)
+  .use(runsRoutes)
+  .use(compareRoutes);
 
 export type BackStockApi = typeof backStockApi;
 

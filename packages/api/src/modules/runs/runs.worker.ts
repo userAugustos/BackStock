@@ -5,13 +5,24 @@ import { buildInitialState, simulate } from '@api/modules/simulation/simulation.
 import { stubDecisionResolver } from '@api/modules/simulation/simulation.stubs';
 import { findVersionById } from '@api/modules/versions/versions.repository';
 import type { SeedState } from '@api/modules/days/days.schemas';
-import type { DecisionResolver, SimEvent } from '@api/modules/simulation/simulation.types';
+import type {
+  DecisionResolver,
+  ForkChange,
+  ResolvedDecision,
+  SimEvent,
+} from '@api/modules/simulation/simulation.types';
 import { config } from '@core/env';
 import { wrapError } from '@core/errors';
 import { LOG_DOMAINS, logger } from '@core/logger';
 import { record } from '@core/telemetry';
 
-import { completeRunOnce, findRunById, updateRunStatus } from './runs.repository';
+import {
+  completeRunOnce,
+  findDecisionsByRunId,
+  findRunById,
+  updateRunStatus,
+} from './runs.repository';
+import { createForkingResolver } from './runs.resolver-factory';
 
 const workerLogger = logger.child({ domain: LOG_DOMAINS.SIM });
 const RUN_WORKER_SUBSCRIBER_ID = 'runs.worker';
@@ -93,12 +104,42 @@ export async function executeRun(runId: string): Promise<void> {
       }));
 
       const catalogSkuIds = seedState.skus.map((s) => s.id);
-      const resolver = buildResolver(
+      const baseResolver = buildResolver(
         version.modelId,
         catalogSkuIds,
         version.inventoryPromptVersion,
         version.pricingPromptVersion
       );
+
+      let resolver: DecisionResolver = baseResolver;
+
+      if (run.parentRunId && run.forkEventSeq !== null) {
+        const forkChange: ForkChange = run.forkChange
+          ? JSON.parse(run.forkChange)
+          : { type: 'version', version_id: run.versionId };
+
+        const parentDecisionRows = await findDecisionsByRunId(run.parentRunId);
+        const parentDecisions = new Map<number, ResolvedDecision>();
+        for (const row of parentDecisionRows) {
+          parentDecisions.set(row.eventSeq, {
+            decision: JSON.parse(row.parsed),
+            raw_output: row.rawOutput,
+            source: row.source as ResolvedDecision['source'],
+            valid: Boolean(row.valid),
+            latency_ms: row.latencyMs,
+            failure_reason: (row.failureReason ?? undefined) as ResolvedDecision['failure_reason'],
+            prompt_version: row.promptVersion,
+            model_id: row.modelId,
+          });
+        }
+
+        resolver = createForkingResolver({
+          parentDecisions,
+          forkEventSeq: run.forkEventSeq,
+          forkChange,
+          baseResolver,
+        });
+      }
 
       const initialState = buildInitialState(seedState);
       const result = await simulate(initialState, events, resolver);
@@ -119,10 +160,11 @@ export async function executeRun(runId: string): Promise<void> {
           agent: d.decision.agent,
           contextSnapshot: d.context_snapshot,
           promptVersion:
-            d.decision.agent === 'pricing'
+            d.prompt_version ??
+            (d.decision.agent === 'pricing'
               ? version.pricingPromptVersion
-              : version.inventoryPromptVersion,
-          modelId: version.modelId,
+              : version.inventoryPromptVersion),
+          modelId: d.model_id ?? version.modelId,
           rawOutput: d.raw_output,
           parsed: d.decision,
           reasoning: d.decision.summary,

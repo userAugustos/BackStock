@@ -1,4 +1,8 @@
-export type { BackStockApi } from '../app';
+export {
+  CompareEnvelopeSchema,
+  CompareQuerySchema,
+  CompareResultSchema,
+} from '../modules/compare/compare.schemas';
 export type {
   CompareDecisionEntry,
   CompareResult,
@@ -8,4 +12,3 @@ export type {
   ImpactDelta,
   ImpactValues,
 } from '../modules/compare/compare.service';
-export type { IgnoredEvent } from '../modules/days/days.normalizer';

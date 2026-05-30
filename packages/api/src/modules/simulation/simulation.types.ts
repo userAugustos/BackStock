@@ -130,6 +130,8 @@ export interface ResolvedDecision {
   valid: boolean;
   latency_ms: number;
   failure_reason?: FailureReason;
+  prompt_version?: string;
+  model_id?: string;
 }
 
 export type DecisionResolver = (
@@ -137,6 +139,18 @@ export type DecisionResolver = (
   context: SimState,
   event: SimEvent
 ) => ResolvedDecision | Promise<ResolvedDecision>;
+
+export interface DecisionOverrideChange {
+  type: 'decision_override';
+  decision: Decision;
+}
+
+export interface VersionChange {
+  type: 'version';
+  version_id: string;
+}
+
+export type ForkChange = DecisionOverrideChange | VersionChange;
 
 export interface DecisionRecord {
   event_seq: number;
@@ -147,6 +161,8 @@ export interface DecisionRecord {
   valid: boolean;
   latency_ms: number;
   failure_reason?: FailureReason;
+  prompt_version?: string;
+  model_id?: string;
 }
 
 export interface RunStep {
