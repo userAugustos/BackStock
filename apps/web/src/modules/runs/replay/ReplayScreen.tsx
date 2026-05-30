@@ -9,7 +9,11 @@ import { formatCurrency, formatPercentPoints } from '@/modules/core/lib/format';
 import { staggerContainer, staggerItem } from '@/modules/core/lib/motion';
 import { DecisionInspector } from '@/modules/runs/replay/DecisionInspector';
 import { OrderTrack } from '@/modules/runs/replay/OrderTrack';
-import { buildDecisionPointSeqs, buildEventMarkers } from '@/modules/runs/replay/replay.derive';
+import {
+  buildDecisionPointSeqs,
+  buildEventMarkers,
+  buildStepPositions,
+} from '@/modules/runs/replay/replay.derive';
 import { ReplayHeader } from '@/modules/runs/replay/ReplayHeader';
 import { StoreStatePanel } from '@/modules/runs/replay/StoreStatePanel';
 import { Timeline } from '@/modules/runs/replay/Timeline';
@@ -28,6 +32,7 @@ export function ReplayScreen({ run, timeline, impact, events }: ReplayScreenProp
 
   const markers = buildEventMarkers(events);
   const decisionPointSeqs = buildDecisionPointSeqs(events);
+  const stepPositions = buildStepPositions(events, timeline.length);
   const currentStep = timeline[playback.index] ?? timeline[0]!;
 
   return (
@@ -56,6 +61,7 @@ export function ReplayScreen({ run, timeline, impact, events }: ReplayScreenProp
               dispatch={dispatch}
               stepCount={timeline.length}
               markers={markers}
+              stepPositions={stepPositions}
             />
           </CardContent>
         </Card>
@@ -123,6 +129,8 @@ export function ReplayScreen({ run, timeline, impact, events }: ReplayScreenProp
                 <DecisionInspector
                   runId={run.id}
                   stepIndex={playback.index}
+                  stepCount={timeline.length}
+                  events={events}
                   decisionPointSeqs={decisionPointSeqs}
                 />
               </CardContent>
