@@ -19,6 +19,7 @@ export type {
   Run,
   RunDecision,
   RunImpact,
+  RunListItem,
   RunStatus,
   RunSummary,
   RunTimelineStep,

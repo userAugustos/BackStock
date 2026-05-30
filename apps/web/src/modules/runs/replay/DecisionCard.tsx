@@ -20,6 +20,7 @@ const SOURCE_VARIANT: Record<RunDecision['source'], NonNullable<BadgeProps['vari
   stub: 'muted',
   override: 'signal',
   reused: 'outline',
+  failure: 'danger',
 };
 
 const cardEnter = {

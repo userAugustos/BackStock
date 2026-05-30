@@ -1,7 +1,7 @@
-import type { Run } from '@back-stock/api/runs';
+import type { RunListItem } from '@back-stock/api/runs';
 
 export interface RunTreeNode {
-  run: Run;
+  run: RunListItem;
   /** Lineage depth from the root (root = 0). */
   depth: number;
   /** Parent run id, or null for the root. */
@@ -11,7 +11,7 @@ export interface RunTreeNode {
 }
 
 export interface RunTreeRow {
-  run: Run;
+  run: RunListItem;
   depth: number;
   parentId: string | null;
   /** Flat index of the parent row (for SVG edge anchoring); -1 for the root. */
@@ -32,7 +32,7 @@ function sortChildren(a: RunTreeNode, b: RunTreeNode): number {
  * parent. Orphans (parent missing from the set) are treated as additional roots
  * so nothing is silently dropped.
  */
-function buildRunForest(runs: Run[]): RunTreeNode[] {
+function buildRunForest(runs: RunListItem[]): RunTreeNode[] {
   const nodes = new Map<string, RunTreeNode>();
   for (const run of runs) {
     nodes.set(run.id, { run, depth: 0, parentId: run.parent_run_id, children: [] });
@@ -90,6 +90,6 @@ function flattenRunForest(roots: RunTreeNode[]): RunTreeRow[] {
   return rows;
 }
 
-export function buildRunTreeRows(runs: Run[]): RunTreeRow[] {
+export function buildRunTreeRows(runs: RunListItem[]): RunTreeRow[] {
   return flattenRunForest(buildRunForest(runs));
 }

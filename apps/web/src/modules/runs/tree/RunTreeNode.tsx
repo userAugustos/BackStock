@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { ChevronRight, GitBranch } from 'lucide-react';
 
-import type { Run, RunStatus } from '@back-stock/api/runs';
+import type { RunListItem, RunStatus } from '@back-stock/api/runs';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/shadcn/tooltip';
 import { cn } from '@repo/ui/utils';
@@ -17,7 +17,7 @@ const STATUS_DOT: Record<RunStatus, { tone: string; pulse: boolean; label: strin
 };
 
 interface RunTreeNodeProps {
-  run: Run;
+  run: RunListItem;
 }
 
 export function RunTreeNode({ run }: RunTreeNodeProps) {
@@ -25,7 +25,7 @@ export function RunTreeNode({ run }: RunTreeNodeProps) {
   const atCapacity = useCompareStore((state) => state.runIds.size >= COMPARE_MAX_RUNS);
   const toggle = useCompareStore((state) => state.toggle);
 
-  const dot = STATUS_DOT[run.status];
+  const dot = STATUS_DOT[run.status]!;
   const isBranch = run.parent_run_id !== null;
   const checkboxDisabled = !selected && atCapacity;
 
@@ -102,7 +102,7 @@ export function RunTreeNode({ run }: RunTreeNodeProps) {
   );
 }
 
-export function ForkEdgeTag({ run }: { run: Run }) {
+export function ForkEdgeTag({ run }: { run: RunListItem }) {
   if (run.parent_run_id === null) return null;
   return (
     <span
@@ -115,7 +115,7 @@ export function ForkEdgeTag({ run }: { run: Run }) {
   );
 }
 
-function forkType(run: Run): string {
+function forkType(run: RunListItem): string {
   if (!run.fork_change) return 'fork';
   return run.fork_change.type === 'version' ? 'version' : 'override';
 }

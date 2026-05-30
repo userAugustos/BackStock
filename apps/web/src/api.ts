@@ -81,11 +81,15 @@ export async function apiCall<T>(
  * Wrapper for domain endpoints that return the `{ data: ... }` envelope.
  * Unwraps the inner `data` so callers receive the typed payload directly.
  *
+ * The request signature is `EdenResponse<unknown>` because Eden's response type
+ * is inferred from each route's Zod response schema (often broader than the
+ * hand-written TS contract on `T`); the caller's `T` is the source of truth.
+ *
  * @example
  * const days = await apiData<DayListItem[]>(() => backStockApi.days.get());
  */
 export async function apiData<T>(
-  request: () => EdenResponse<{ data: T }>,
+  request: () => EdenResponse<unknown>,
   schema?: z.ZodType
 ): Promise<T> {
   const result = await request();

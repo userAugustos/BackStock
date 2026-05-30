@@ -83,7 +83,7 @@ export function deltaTone(value: number, better: BetterDirection): DeltaTone {
 
 /** The SDK types compare step/decision payloads as `unknown`; narrow at this boundary. */
 export function readState(entry: CompareStepEntry | undefined): SimState | null {
-  return entry ? (entry.state_snapshot as SimState) : null;
+  return entry ? (entry.state_snapshot as unknown as SimState) : null;
 }
 
 export function readDecision(entry: CompareDecisionEntry | null | undefined): Decision | null {

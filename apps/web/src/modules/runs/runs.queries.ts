@@ -7,6 +7,7 @@ import type {
   Run,
   RunDecision,
   RunImpact,
+  RunListItem,
   RunStatus,
   RunSummary,
   RunTimelineStep,
@@ -22,7 +23,7 @@ export const isRunActive = (status: RunStatus): boolean => ACTIVE_STATUSES.has(s
 export const dayRunsQueryOptions = (dayId: string) =>
   queryOptions({
     queryKey: queryKeys.days.runs(dayId),
-    queryFn: () => apiData<Run[]>(() => dayApi(dayId).runs.get()),
+    queryFn: () => apiData<RunListItem[]>(() => dayApi(dayId).runs.get()),
     refetchInterval: (query) => {
       const runs = query.state.data;
       if (!runs) return false;

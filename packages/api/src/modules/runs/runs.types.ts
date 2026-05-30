@@ -8,7 +8,7 @@ import type {
 
 export type RunStatus = 'queued' | 'running' | 'done' | 'failed';
 
-export interface Run {
+export interface RunListItem {
   id: string;
   day_id: string;
   version_id: string;
@@ -19,6 +19,11 @@ export interface Run {
   label: string | null;
   created_at: string;
   completed_at: string | null;
+}
+
+export interface Run extends RunListItem {
+  decisions_total: number;
+  decisions_failed: number;
 }
 
 export interface RunSummary {
@@ -66,7 +71,8 @@ export interface RunDecision {
   raw_output: string;
   parsed: Decision;
   reasoning: string;
-  source: 'stub' | 'llm' | 'override' | 'reused';
+  source: 'stub' | 'llm' | 'override' | 'reused' | 'failure';
   valid: boolean;
   latency_ms: number;
+  failure_reason: string | null;
 }

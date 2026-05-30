@@ -2,7 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { GitCompareArrows, X } from 'lucide-react';
 import { m } from 'motion/react';
 
-import type { Run } from '@back-stock/api/runs';
+import type { RunListItem } from '@back-stock/api/runs';
 
 import { Button } from '@repo/ui/shadcn/button';
 import { cn } from '@repo/ui/utils';
@@ -13,7 +13,7 @@ import { buildRunTreeRows } from '@/modules/runs/tree/runTree.build';
 import { ForkEdgeTag, RunTreeNode } from '@/modules/runs/tree/RunTreeNode';
 
 interface RunTreeProps {
-  runs: Run[];
+  runs: RunListItem[];
 }
 
 export function RunTree({ runs }: RunTreeProps) {

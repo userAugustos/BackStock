@@ -28,6 +28,7 @@ import type {
   Run,
   RunDecision,
   RunImpact,
+  RunListItem,
   RunStatus,
   RunSummary,
   RunTimelineStep,
@@ -98,7 +99,7 @@ export async function getRun(id: string): Promise<Run> {
   };
 }
 
-export async function listRunsForDay(dayId: string): Promise<Run[]> {
+export async function listRunsForDay(dayId: string): Promise<RunListItem[]> {
   const day = await findDayById(dayId);
   if (!day) throw notFound('day_not_found', `Day '${dayId}' not found`);
 

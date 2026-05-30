@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import type { Run } from '@back-stock/api/runs';
+import type { RunListItem } from '@back-stock/api/runs';
 
 import {
   formatCurrency,
@@ -11,7 +11,7 @@ import {
 import { runImpactQueryOptions } from '@/modules/runs/runs.queries';
 import { describeForkChange } from '@/modules/runs/tree/forkChange';
 
-export function RunNodeTooltip({ run }: { run: Run }) {
+export function RunNodeTooltip({ run }: { run: RunListItem }) {
   const isDone = run.status === 'done';
   const impactQuery = useQuery(runImpactQueryOptions(run.id, isDone));
 
