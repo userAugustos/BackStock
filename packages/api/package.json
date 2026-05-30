@@ -48,6 +48,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
+    "db:reset": "rm -f data/back-stock.db data/back-stock.db-shm data/back-stock.db-wal && echo 'Local DB wiped — next \"bun dev\" will re-migrate and re-seed.'",
     "test": "bun test --env-file .env --preload ./src/test/setup.ts",
     "test:e2e": "bun test --bail --timeout 30000 --env-file .env --env-file .env.test --preload ./src/test/setup.ts src/test/e2e.*.test.ts",
     "typecheck": "tsc --noEmit"

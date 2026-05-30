@@ -9,9 +9,9 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import { db } from '@api/db/client';
 import { compareRoutes } from '@api/modules/compare/compare.routes';
 import { daysRoutes } from '@api/modules/days/days.routes';
-import { seedHeroDay } from '@api/modules/days/days.seed';
 import { runsRoutes } from '@api/modules/runs/runs.routes';
 import { versionsRoutes } from '@api/modules/versions/versions.routes';
+import { seedExample } from '@api/seed';
 import { config } from '@core/env';
 import { errorPlugin } from '@core/errors';
 import { LOG_DOMAINS, logger } from '@core/logger';
@@ -85,7 +85,7 @@ export type BackStockApi = typeof backStockApi;
 
 export const setupApi = async () => {
   migrate(db, { migrationsFolder: './src/db/migrations' });
-  await seedHeroDay();
+  await seedExample();
   httpLogger.info('Setup complete', { env: config.environment });
 };
 
