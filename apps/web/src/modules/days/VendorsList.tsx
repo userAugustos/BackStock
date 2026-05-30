@@ -15,7 +15,7 @@ export function VendorsList({ seedState }: VendorsListProps) {
         <li
           key={vendor.id}
           data-testid={`vendor-row-${vendor.id}`}
-          className="bg-background/40 flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 ring-1 ring-white/[0.04]"
+          className="bg-foreground/[0.025] ring-border/40 flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 ring-1"
         >
           <span className="text-foreground inline-flex items-center gap-2 font-mono text-sm">
             <Truck className="text-muted-foreground size-4" />

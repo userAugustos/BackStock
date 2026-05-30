@@ -58,7 +58,7 @@ function HeaderStat({
   value: number;
 }) {
   return (
-    <div className="bg-card rounded-xl px-4 py-2.5 shadow-[var(--elevation-1)] ring-1 ring-white/[0.04]">
+    <div className="bg-card ring-border/60 rounded-xl px-4 py-2.5 shadow-[var(--elevation-1)] ring-1">
       <dt className="text-muted-foreground flex items-center gap-1.5 text-[11px] tracking-wider uppercase">
         {icon}
         {label}

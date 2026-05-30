@@ -13,18 +13,23 @@ interface DayCardProps {
 
 export function DayCard({ day }: DayCardProps) {
   return (
-    <Card className="group transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[var(--elevation-3)]">
+    <Card className="group hover:ring-primary/30 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:shadow-[var(--elevation-3)]">
       <Link
         to="/days/$dayId"
         params={{ dayId: day.id }}
         data-testid={`day-card-${day.id}`}
-        className="focus-visible:ring-ring block rounded-2xl p-5 focus-visible:ring-2 focus-visible:outline-none"
+        className="focus-visible:ring-ring block rounded-2xl p-5 transition-transform duration-150 focus-visible:ring-2 focus-visible:outline-none active:scale-[0.985]"
       >
         <div className="flex items-start justify-between gap-3">
-          <h3 className="font-display text-base leading-snug font-bold tracking-tight">
+          <h3 className="font-display text-base leading-snug font-bold tracking-tight text-balance">
             {day.name}
           </h3>
-          <ArrowUpRight className="text-muted-foreground group-hover:text-primary size-4 shrink-0 transition-[transform,color] duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <span
+            aria-hidden
+            className="group-hover:bg-primary/10 group-hover:text-primary text-muted-foreground -mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-lg transition-[background-color,color,transform] duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          >
+            <ArrowUpRight className="size-4" />
+          </span>
         </div>
 
         <div className="mt-2 flex items-center gap-2">
@@ -46,12 +51,14 @@ export function DayCard({ day }: DayCardProps) {
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="bg-background/40 rounded-lg px-3 py-2 ring-1 ring-white/[0.04]">
+    <div className="bg-foreground/[0.025] ring-border/40 rounded-lg px-3 py-2 ring-1">
       <dt className="text-muted-foreground flex items-center gap-1.5 text-[11px] tracking-wider uppercase">
         {icon}
         {label}
       </dt>
-      <dd className="mt-0.5 font-mono text-lg font-semibold tabular-nums">{formatNumber(value)}</dd>
+      <dd className="text-foreground mt-0.5 font-mono text-lg font-semibold tabular-nums">
+        {formatNumber(value)}
+      </dd>
     </div>
   );
 }

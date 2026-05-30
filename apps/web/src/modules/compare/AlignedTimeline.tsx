@@ -43,9 +43,9 @@ export function AlignedTimeline({ result, colors }: AlignedTimelineProps) {
 
   return (
     <ScrollArea className="max-h-[28rem] w-full" data-testid="aligned-timeline">
-      <div className="overflow-hidden rounded-xl ring-1 ring-white/[0.06]">
+      <div className="ring-foreground/[0.06] overflow-hidden rounded-xl ring-1">
         <table className="w-full border-collapse text-sm">
-          <thead className="bg-card/80 sticky top-0 z-10 backdrop-blur">
+          <thead className="bg-card/95 supports-[backdrop-filter]:bg-card/80 sticky top-0 z-10 backdrop-blur">
             <tr>
               <th className="text-muted-foreground h-9 px-3 text-left text-[11px] font-semibold tracking-wider uppercase">
                 Step
@@ -82,7 +82,7 @@ export function AlignedTimeline({ result, colors }: AlignedTimelineProps) {
                       ? 'bg-[var(--info)]/[0.08]'
                       : differ
                         ? 'bg-[var(--warning)]/[0.05]'
-                        : 'hover:bg-white/[0.02]'
+                        : 'hover:bg-foreground/[0.02]'
                   )}
                 >
                   <td className="px-3 py-2.5 align-top">
@@ -151,7 +151,7 @@ function TimelineCell({
               'inline-block rounded px-1.5 py-0.5 font-mono text-[10px] ring-1',
               highlight
                 ? 'bg-[var(--warning)]/12 text-[var(--warning)] ring-[var(--warning)]/30'
-                : 'bg-background/60 text-muted-foreground ring-white/[0.06]'
+                : 'bg-foreground/[0.04] text-muted-foreground ring-foreground/[0.06]'
             )}
           >
             {describeDecision(decision)}

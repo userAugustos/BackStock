@@ -43,7 +43,7 @@ export function DecisionCard({ runId, decision }: DecisionCardProps) {
       animate={cardEnter.animate}
       exit={cardEnter.exit}
       transition={cardEnter.transition}
-      className="bg-card rounded-2xl p-5 shadow-[var(--elevation-2)] ring-1 ring-white/[0.06]"
+      className="bg-card ring-foreground/[0.06] rounded-2xl p-5 shadow-[var(--elevation-2)] ring-1"
     >
       <m.div
         initial="hidden"
@@ -92,7 +92,7 @@ export function DecisionCard({ runId, decision }: DecisionCardProps) {
         <m.div
           variants={itemVariants}
           data-testid="decision-parsed"
-          className="bg-background/50 rounded-xl px-4 py-3 ring-1 ring-white/[0.06]"
+          className="bg-foreground/[0.03] ring-foreground/[0.06] rounded-xl px-4 py-3 ring-1"
         >
           {decision.parsed.agent === 'inventory' ? (
             <div className="flex items-baseline justify-between gap-3">

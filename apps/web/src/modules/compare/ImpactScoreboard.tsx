@@ -53,7 +53,7 @@ function MetricCard({ metric, runIds, perRun, deltas, colors }: MetricCardProps)
     <m.div
       variants={staggerItem}
       data-testid={`scoreboard-metric-${metric.testid}`}
-      className="bg-card rounded-2xl p-4 shadow-[var(--elevation-1)] ring-1 ring-white/[0.06]"
+      className="bg-card ring-foreground/[0.06] rounded-2xl p-4 shadow-[var(--elevation-1)] ring-1"
     >
       <div className="flex items-center justify-between">
         <h3 className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
@@ -91,7 +91,7 @@ function MetricCard({ metric, runIds, perRun, deltas, colors }: MetricCardProps)
       </dl>
 
       {deltas.length > 0 ? (
-        <div className="mt-3 space-y-1.5 border-t border-white/[0.06] pt-3">
+        <div className="border-foreground/[0.06] mt-3 space-y-1.5 border-t pt-3">
           {deltas.map((delta) => {
             const value = delta[metric.key];
             const tone = deltaTone(value, metric.better);

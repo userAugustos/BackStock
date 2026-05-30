@@ -92,7 +92,7 @@ export function StoreStatePanel({ state, steps, currentStep }: StoreStatePanelPr
 
       <StateSparklines series={series} currentStep={currentStep} />
 
-      <div className="overflow-hidden rounded-xl ring-1 ring-white/[0.06]">
+      <div className="ring-foreground/[0.06] overflow-hidden rounded-xl ring-1">
         <Table data-testid="sku-state-table">
           <TableHeader>
             <TableRow>
@@ -143,7 +143,7 @@ function Readout({ label, value, icon: Icon, tone = 'default', testid }: Readout
   return (
     <div
       data-testid={testid}
-      className="bg-background/50 rounded-xl px-3 py-2.5 ring-1 ring-white/[0.06]"
+      className="bg-foreground/[0.03] ring-foreground/[0.06] rounded-xl px-3 py-2.5 ring-1"
     >
       <dt className="text-muted-foreground flex items-center gap-1.5 text-[10px] tracking-wider uppercase">
         <Icon className="size-3.5" />

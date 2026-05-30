@@ -14,21 +14,21 @@ const SPECS: SparklineSpec[] = [
   {
     key: 'inventoryUnits',
     label: 'inventory',
-    color: 'var(--chart-1)',
+    color: 'var(--info)',
     gradientId: 'spark-inv',
     testid: 'sparkline-inventory',
   },
   {
     key: 'marginPct',
     label: 'margin %',
-    color: 'var(--chart-2)',
+    color: 'var(--good)',
     gradientId: 'spark-margin',
     testid: 'sparkline-margin',
   },
   {
     key: 'revenue',
     label: 'revenue',
-    color: 'var(--chart-4)',
+    color: 'var(--primary)',
     gradientId: 'spark-rev',
     testid: 'sparkline-revenue',
   },
@@ -64,7 +64,7 @@ function Sparkline({
   return (
     <div
       data-testid={spec.testid}
-      className="bg-background/40 rounded-xl p-2.5 ring-1 ring-white/[0.05]"
+      className="bg-foreground/[0.025] ring-foreground/[0.05] rounded-xl p-2.5 ring-1"
     >
       <div className="flex items-baseline justify-between">
         <span className="text-muted-foreground text-[10px] tracking-wider uppercase">

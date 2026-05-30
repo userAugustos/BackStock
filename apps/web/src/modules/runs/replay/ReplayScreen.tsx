@@ -168,7 +168,7 @@ function ImpactSummary({ impact }: { impact: RunImpact }) {
       {rows.map((row) => (
         <div
           key={row.label}
-          className="flex items-center justify-between gap-3 border-b border-white/[0.04] pb-2 last:border-0 last:pb-0"
+          className="border-border/40 flex items-center justify-between gap-3 border-b pb-2 last:border-0 last:pb-0"
         >
           <dt className="text-muted-foreground text-sm">{row.label}</dt>
           <dd

@@ -33,7 +33,7 @@ export function IgnoredReport({ report, testid = 'ignored-report' }: IgnoredRepo
         {report.map((entry) => (
           <li
             key={entry.original_seq}
-            className="bg-background/40 flex flex-wrap items-center gap-2 rounded-lg px-3 py-2 text-xs ring-1 ring-white/[0.04]"
+            className="bg-foreground/[0.025] ring-border/40 flex flex-wrap items-center gap-2 rounded-lg px-3 py-2 text-xs ring-1"
           >
             <Badge variant="muted" className="font-mono">
               seq {entry.original_seq}

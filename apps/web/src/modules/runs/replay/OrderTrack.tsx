@@ -14,7 +14,7 @@ interface OrderTrackProps {
 const FSM_FLOW: OrderStatus[] = ['recommended', 'placed', 'in_transit', 'delivered'];
 
 const STATUS_TONE: Record<OrderStatus, string> = {
-  recommended: 'bg-muted text-muted-foreground ring-white/[0.06]',
+  recommended: 'bg-muted text-muted-foreground ring-foreground/[0.06]',
   placed: 'bg-[var(--info)]/15 text-[var(--info)] ring-[var(--info)]/30',
   in_transit: 'bg-[var(--info)]/15 text-[var(--info)] ring-[var(--info)]/30',
   delivered: 'bg-primary/15 text-primary ring-primary/30',
@@ -61,7 +61,7 @@ export function OrderTrack({ orders }: OrderTrackProps) {
             key={`${order.sku_id}-${order.vendor_id}-${order.created_at_seq}-${idx}`}
             layout
             data-testid={`order-row-${order.sku_id}-${order.created_at_seq}`}
-            className="bg-background/40 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl px-3 py-2.5 ring-1 ring-white/[0.05]"
+            className="bg-foreground/[0.025] ring-foreground/[0.05] flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl px-3 py-2.5 ring-1"
           >
             <div className="min-w-0 font-mono text-xs">
               <span className="text-foreground">{order.sku_id}</span>
@@ -85,7 +85,7 @@ export function OrderTrack({ orders }: OrderTrackProps) {
                         'rounded-md px-2 py-0.5 font-mono text-[10px] ring-1 transition-colors',
                         reached
                           ? STATUS_TONE[node]
-                          : 'bg-background/30 text-muted-foreground/40 ring-white/[0.04]',
+                          : 'bg-foreground/[0.015] text-muted-foreground/40 ring-foreground/[0.04]',
                         isCurrent && 'shadow-[var(--elevation-1)]'
                       )}
                     >

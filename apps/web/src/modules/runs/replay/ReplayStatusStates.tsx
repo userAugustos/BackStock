@@ -18,7 +18,7 @@ export function ExecutingState({ status }: ExecutingStateProps) {
   return (
     <div
       data-testid="replay-executing"
-      className="bg-card flex flex-col items-center gap-5 rounded-2xl p-12 text-center shadow-[var(--elevation-1)] ring-1 ring-white/[0.05]"
+      className="bg-card ring-foreground/[0.05] flex flex-col items-center gap-5 rounded-2xl p-12 text-center shadow-[var(--elevation-1)] ring-1"
     >
       <div className="relative grid size-20 place-items-center">
         <m.span

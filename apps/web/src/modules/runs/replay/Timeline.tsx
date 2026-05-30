@@ -38,7 +38,7 @@ export function Timeline({ state, dispatch, stepCount, markers }: TimelineProps)
 
       <div className="relative px-1 pt-6 pb-2">
         {/* Rail */}
-        <div className="bg-background/70 relative h-2 rounded-full ring-1 ring-white/[0.05]">
+        <div className="bg-foreground/[0.06] ring-border/40 relative h-2 rounded-full ring-1">
           <m.div
             className="bg-primary/70 absolute inset-y-0 left-0 rounded-full"
             style={{ width: `${playheadPct}%` }}

@@ -33,7 +33,7 @@ export function RunNodeTooltip({ run }: { run: RunListItem }) {
 
       {isDone ? (
         impactQuery.data ? (
-          <dl className="grid grid-cols-2 gap-x-3 gap-y-1 border-t border-white/[0.08] pt-2 font-mono text-[11px] tabular-nums">
+          <dl className="border-foreground/[0.08] grid grid-cols-2 gap-x-3 gap-y-1 border-t pt-2 font-mono text-[11px] tabular-nums">
             <TooltipMetric label="waste" value={formatPercentPoints(impactQuery.data.waste_pct)} />
             <TooltipMetric
               label="stockouts"
@@ -46,12 +46,12 @@ export function RunNodeTooltip({ run }: { run: RunListItem }) {
             />
           </dl>
         ) : (
-          <p className="text-muted-foreground border-t border-white/[0.08] pt-2 text-[11px]">
+          <p className="text-muted-foreground border-foreground/[0.08] border-t pt-2 text-[11px]">
             loading impact…
           </p>
         )
       ) : (
-        <p className="text-muted-foreground border-t border-white/[0.08] pt-2 text-[11px]">
+        <p className="text-muted-foreground border-foreground/[0.08] border-t pt-2 text-[11px]">
           impact available once the run is done
         </p>
       )}

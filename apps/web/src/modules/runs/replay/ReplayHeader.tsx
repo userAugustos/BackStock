@@ -96,7 +96,7 @@ export function ReplayHeader({ run }: ReplayHeaderProps) {
 
         <label
           className={cn(
-            'bg-card flex cursor-pointer items-center gap-2.5 rounded-xl px-3.5 py-2.5 ring-1 ring-white/[0.06] transition-colors',
+            'bg-card ring-foreground/[0.06] flex cursor-pointer items-center gap-2.5 rounded-xl px-3.5 py-2.5 ring-1 transition-colors',
             selected && 'ring-primary/40 bg-primary/[0.07]',
             checkboxDisabled && 'cursor-not-allowed opacity-50'
           )}

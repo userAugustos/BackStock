@@ -35,14 +35,15 @@ export function RunTreeNode({ run }: RunTreeNodeProps) {
         data-testid={`run-node-${run.id}`}
         data-state={selected ? 'selected' : undefined}
         className={cn(
-          'bg-card/80 group flex items-center gap-2.5 rounded-xl px-3 py-2.5 ring-1 ring-white/[0.06] transition-[background-color,box-shadow] duration-150',
+          'bg-foreground/[0.02] ring-border/40 group flex items-center gap-2.5 rounded-xl px-3 py-2.5 ring-1 transition-[background-color,box-shadow,border-color] duration-150',
+          'hover:bg-foreground/[0.04] hover:ring-border/80',
           'hover:shadow-[var(--elevation-1)]',
           selected && 'bg-primary/[0.07] ring-primary/40'
         )}
       >
         <label
           className={cn(
-            'inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-[transform,background-color] duration-150 hover:bg-white/[0.05] active:scale-[0.92]',
+            'hover:bg-foreground/[0.05] inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-[transform,background-color] duration-150 active:scale-[0.92]',
             checkboxDisabled && 'cursor-not-allowed opacity-40'
           )}
           title={checkboxDisabled ? `Compare up to ${COMPARE_MAX_RUNS} runs` : 'Add to compare'}

@@ -3,7 +3,9 @@ import * as React from 'react';
 import { cn } from '../lib/utils';
 
 function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('animate-pulse rounded-md bg-white/[0.06]', className)} {...props} />;
+  return (
+    <div className={cn('bg-foreground/[0.06] animate-pulse rounded-md', className)} {...props} />
+  );
 }
 
 export { Skeleton };

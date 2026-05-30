@@ -143,7 +143,7 @@ function RunColumn({ run, color }: { run: CompareRunMeta; color?: RunColor }) {
   return (
     <div
       data-testid={`compare-run-column-${run.run_id}`}
-      className="bg-card relative overflow-hidden rounded-2xl p-4 ring-1 ring-white/[0.06]"
+      className="bg-card ring-foreground/[0.06] relative overflow-hidden rounded-2xl p-4 ring-1"
     >
       <span
         aria-hidden

@@ -57,7 +57,7 @@ function VersionRow({ version }: { version: Version }) {
   return (
     <li
       data-testid={`version-row-${version.id}`}
-      className="bg-background/40 rounded-xl p-3 ring-1 ring-white/[0.04]"
+      className="bg-foreground/[0.025] ring-border/40 rounded-xl p-3 ring-1"
     >
       <div className="flex items-center justify-between gap-2">
         <span className="font-display font-semibold">{version.label}</span>

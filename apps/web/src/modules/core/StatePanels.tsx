@@ -63,7 +63,7 @@ export function EmptyPanel({
     <div
       data-testid={testid}
       className={cn(
-        'border-border bg-card/40 flex flex-col items-center gap-3 rounded-2xl border border-dashed p-10 text-center',
+        'border-border/80 bg-foreground/[0.02] flex flex-col items-center gap-3 rounded-2xl border border-dashed p-10 text-center',
         className
       )}
     >
