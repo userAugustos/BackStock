@@ -56,6 +56,7 @@ export const CompareQuerySchema = z.object({
   run_a: z.string().min(1),
   run_b: z.string().min(1),
   run_c: z.string().min(1).optional(),
+  run_d: z.string().min(1).optional(),
 });
 
 export const CompareEnvelopeSchema = z.object({ data: CompareResultSchema });

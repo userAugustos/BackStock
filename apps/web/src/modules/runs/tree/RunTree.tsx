@@ -32,6 +32,7 @@ export function RunTree({ runs }: RunTreeProps) {
         run_a: selected[0]!,
         run_b: selected[1]!,
         ...(selected[2] ? { run_c: selected[2] } : {}),
+        ...(selected[3] ? { run_d: selected[3] } : {}),
       },
     });
   };

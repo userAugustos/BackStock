@@ -24,11 +24,18 @@ interface RunTreeNodeProps {
 export function RunTreeNode({ run }: RunTreeNodeProps) {
   const selected = useCompareStore((state) => state.runIds.has(run.id));
   const atCapacity = useCompareStore((state) => state.runIds.size >= COMPARE_MAX_RUNS);
+  const compareDayId = useCompareStore((state) => state.dayId);
   const toggle = useCompareStore((state) => state.toggle);
 
   const dot = STATUS_DOT[run.status]!;
   const isBranch = run.parent_run_id !== null;
-  const checkboxDisabled = !selected && atCapacity;
+  const crossDay = compareDayId !== null && compareDayId !== run.day_id;
+  const checkboxDisabled = !selected && (atCapacity || crossDay);
+  const disabledReason = crossDay
+    ? 'Compare requires runs from the same day'
+    : atCapacity
+      ? `Compare up to ${COMPARE_MAX_RUNS} runs`
+      : 'Add to compare';
 
   return (
     <Tooltip>
@@ -47,14 +54,14 @@ export function RunTreeNode({ run }: RunTreeNodeProps) {
             'hover:bg-foreground/[0.05] inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-[transform,background-color] duration-150 active:scale-[0.92]',
             checkboxDisabled && 'cursor-not-allowed opacity-40'
           )}
-          title={checkboxDisabled ? `Compare up to ${COMPARE_MAX_RUNS} runs` : 'Add to compare'}
+          title={disabledReason}
         >
           <input
             type="checkbox"
             data-testid={`run-node-compare-${run.id}`}
             checked={selected}
             disabled={checkboxDisabled}
-            onChange={() => toggle(run.id)}
+            onChange={() => toggle(run.id, run.day_id)}
             className="size-3.5 cursor-pointer accent-[var(--primary)]"
             aria-label={`Select run ${shortId(run.id)} for comparison`}
           />

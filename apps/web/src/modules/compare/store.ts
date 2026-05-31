@@ -2,42 +2,34 @@ import { create } from 'zustand';
 
 interface CompareState {
   runIds: Set<string>;
-  add: (runId: string) => void;
-  remove: (runId: string) => void;
-  toggle: (runId: string) => void;
+  /** The dayId scope of the current selection — selecting from another day is blocked. */
+  dayId: string | null;
+  toggle: (runId: string, dayId: string) => void;
   clear: () => void;
 }
 
-const MAX_RUNS = 3;
+const MAX_RUNS = 4;
 
 export const useCompareStore = create<CompareState>((set) => ({
   runIds: new Set<string>(),
-  add: (runId) =>
+  dayId: null,
+  toggle: (runId, dayId) =>
     set((state) => {
-      if (state.runIds.has(runId) || state.runIds.size >= MAX_RUNS) return state;
+      if (state.runIds.has(runId)) {
+        const next = new Set(state.runIds);
+        next.delete(runId);
+        // Last selection removed → scope is free again.
+        const nextDayId = next.size === 0 ? null : state.dayId;
+        return { runIds: next, dayId: nextDayId };
+      }
+      // Cross-day add is silently rejected (UI disables the checkbox so this is a backstop).
+      if (state.dayId !== null && state.dayId !== dayId) return state;
+      if (state.runIds.size >= MAX_RUNS) return state;
       const next = new Set(state.runIds);
       next.add(runId);
-      return { runIds: next };
+      return { runIds: next, dayId: dayId };
     }),
-  remove: (runId) =>
-    set((state) => {
-      if (!state.runIds.has(runId)) return state;
-      const next = new Set(state.runIds);
-      next.delete(runId);
-      return { runIds: next };
-    }),
-  toggle: (runId) =>
-    set((state) => {
-      const next = new Set(state.runIds);
-      if (next.has(runId)) {
-        next.delete(runId);
-      } else {
-        if (next.size >= MAX_RUNS) return state;
-        next.add(runId);
-      }
-      return { runIds: next };
-    }),
-  clear: () => set({ runIds: new Set<string>() }),
+  clear: () => set({ runIds: new Set<string>(), dayId: null }),
 }));
 
 export const COMPARE_MAX_RUNS = MAX_RUNS;

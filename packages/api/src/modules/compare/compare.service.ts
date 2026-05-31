@@ -84,9 +84,14 @@ function findCommonFork(runs: RunRow[]): ForkDescriptor | null {
  * siblings from the same parent+seq or as that parent plus its children. All-root
  * comparisons have no fork descriptor and use `divergence_seq = 0`.
  */
+const COMPARE_MAX_RUNS = 10;
+
 export async function compareRuns(runIds: string[]): Promise<CompareResult> {
-  if (runIds.length < 2 || runIds.length > 3)
-    throw badRequest('invalid_run_count', 'Compare requires 2 or 3 run IDs');
+  if (runIds.length < 2 || runIds.length > COMPARE_MAX_RUNS)
+    throw badRequest(
+      'invalid_run_count',
+      `Compare requires between 2 and ${COMPARE_MAX_RUNS} run IDs`
+    );
 
   const uniqueIds = [...new Set(runIds)];
   if (uniqueIds.length !== runIds.length)

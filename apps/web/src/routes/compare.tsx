@@ -14,6 +14,7 @@ const compareSearchSchema = z.object({
   run_a: z.string().min(1).optional(),
   run_b: z.string().min(1).optional(),
   run_c: z.string().min(1).optional(),
+  run_d: z.string().min(1).optional(),
 });
 
 type CompareSearch = z.infer<typeof compareSearchSchema>;
@@ -25,7 +26,7 @@ export const Route = createFileRoute('/compare')({
 
 /** Distinct, defined run ids drawn from the URL (the linkable source of truth). */
 function runIdsFromSearch(search: CompareSearch): string[] {
-  const raw = [search.run_a, search.run_b, search.run_c].filter(
+  const raw = [search.run_a, search.run_b, search.run_c, search.run_d].filter(
     (id): id is string => typeof id === 'string' && id.length > 0
   );
   return [...new Set(raw)];
@@ -35,7 +36,7 @@ const ERROR_COPY: Record<string, string> = {
   different_days: 'These runs belong to different days. Compare runs from the same day.',
   run_not_complete: 'One of these runs has not finished yet. Wait for it to complete.',
   duplicate_run_ids: 'The selected runs are not distinct.',
-  invalid_run_count: 'Select 2 or 3 runs to compare.',
+  invalid_run_count: 'Select 2–4 runs to compare.',
   run_not_found: 'One of these runs no longer exists.',
 };
 
@@ -53,7 +54,7 @@ function ComparePage() {
       <div data-testid="compare-empty-state" className="mx-auto max-w-xl py-12">
         <EmptyPanel
           title="Pick runs to compare"
-          message="Select 2–3 runs of the same day from a day's run tree to see their outcomes side by side."
+          message="Select 2–4 runs of the same day from a day's run tree to see their outcomes side by side."
           icon={<GitCompareArrows className="size-5" />}
           action={
             <Link

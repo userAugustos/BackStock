@@ -38,8 +38,15 @@ export function ReplayHeader({ run }: ReplayHeaderProps) {
 
   const selected = useCompareStore((state) => state.runIds.has(run.id));
   const atCapacity = useCompareStore((state) => state.runIds.size >= COMPARE_MAX_RUNS);
+  const compareDayId = useCompareStore((state) => state.dayId);
   const toggle = useCompareStore((state) => state.toggle);
-  const checkboxDisabled = !selected && atCapacity;
+  const crossDay = compareDayId !== null && compareDayId !== run.day_id;
+  const checkboxDisabled = !selected && (atCapacity || crossDay);
+  const disabledReason = crossDay
+    ? 'Compare requires runs from the same day'
+    : atCapacity
+      ? `Compare up to ${COMPARE_MAX_RUNS} runs`
+      : 'Add to compare';
 
   const isBranch = run.parent_run_id !== null;
 
@@ -100,14 +107,14 @@ export function ReplayHeader({ run }: ReplayHeaderProps) {
             selected && 'ring-primary/40 bg-primary/[0.07]',
             checkboxDisabled && 'cursor-not-allowed opacity-50'
           )}
-          title={checkboxDisabled ? `Compare up to ${COMPARE_MAX_RUNS} runs` : 'Add to compare'}
+          title={disabledReason}
         >
           <input
             type="checkbox"
             data-testid="replay-compare-toggle"
             checked={selected}
             disabled={checkboxDisabled}
-            onChange={() => toggle(run.id)}
+            onChange={() => toggle(run.id, run.day_id)}
             className="size-4 cursor-pointer accent-[var(--primary)]"
             aria-label="Add this run to compare"
           />
